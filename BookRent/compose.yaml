@@ -1,0 +1,7 @@
+﻿services:
+  bookrent.catalog:
+    image: bookrent.catalog
+    build:
+      context: .
+      dockerfile: BookRent.Catalog/Dockerfile
+
