@@ -3,5 +3,29 @@
     image: bookrent.catalog
     build:
       context: .
-      dockerfile: BookRent.Catalog/Dockerfile
+      dockerfile: Services/BookRent.Catalog/Dockerfile
+
+  bookrent.user:
+    image: bookrent.user
+    build:
+      context: .
+      dockerfile: Services/BookRent.User/Dockerfile
+
+  bookrent.renting:
+    image: bookrent.renting
+    build:
+      context: .
+      dockerfile: Services/BookRent.Renting/Dockerfile
+
+  bookrent.identity:
+    image: bookrent.identity
+    build:
+      context: .
+      dockerfile: Services/BookRent.Identity/Dockerfile
+
+  bookrent.gateqay:
+    image: bookrent.gateqay
+    build:
+      context: .
+      dockerfile: BookRent.Gateway/Dockerfile
 

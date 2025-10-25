@@ -1,6 +1,0 @@
-@BookRent.Catalog_HostAddress = http://localhost:5195
-
-GET {{BookRent.Catalog_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
