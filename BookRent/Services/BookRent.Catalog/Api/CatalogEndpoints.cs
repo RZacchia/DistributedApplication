@@ -13,9 +13,10 @@ public static class CatalogEndpoints
         group.MapPost("/removeBooks", RemoveBooks);
     }
 
-    private static IResult GetAllBooks()
+    private static IResult GetAllBooks(HttpRequest request)
     {
-        return Results.Ok();
+        
+        return TypedResults.Ok("success");
     }
     
     private static IResult GetBook(Guid id)
