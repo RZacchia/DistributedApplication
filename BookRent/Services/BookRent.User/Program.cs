@@ -1,3 +1,4 @@
+using BookRent.User.Api;
 using BookRent.User.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +11,7 @@ builder.Services.AddDbContext<UserDbContext>();
 
 
 var app = builder.Build();
-
+app.MapUserEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

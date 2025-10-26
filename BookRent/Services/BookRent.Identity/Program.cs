@@ -1,3 +1,4 @@
+using BookRent.Identity.Api;
 using BookRent.Identity.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddDbContext<IdentityDbContext>();
 
 
 var app = builder.Build();
+app.MapIdentityEndPoints();
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,3 +1,4 @@
+using BookRent.Renting.Api;
 using BookRent.Renting.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +11,7 @@ builder.Services.AddDbContext<RentingDbContext>();
 
 
 var app = builder.Build();
-
+app.MapRentingEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
