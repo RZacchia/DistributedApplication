@@ -23,8 +23,8 @@
       context: .
       dockerfile: Services/BookRent.Identity/Dockerfile
 
-  bookrent.gateqay:
-    image: bookrent.gateqay
+  bookrent.gateway:
+    image: bookrent.gateway
     build:
       context: .
       dockerfile: BookRent.Gateway/Dockerfile

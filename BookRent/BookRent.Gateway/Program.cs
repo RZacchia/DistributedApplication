@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.json", reloadOnChange: true, optional: true);
+builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 // --- Add Authentication & JWT configuration ---
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -42,6 +44,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapReverseProxy();
 
 app.MapControllers();
 
