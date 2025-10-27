@@ -1,13 +1,17 @@
 ﻿services:
-#  gateway-service:
-#    build:
-#      context: .
-#      dockerfile: BookRent.Gateway/Dockerfile
-#    container_name: gateway-service
-#    environment:
-#      ASPNETCORE_ENVIRONMENT: "Development"      
-#    ports:
-#      - "8080:8080"
+  orchestrator-service:
+    build:
+      context: .
+      dockerfile: BookRent.Orchestrator/Dockerfile
+    container_name: orchestrator-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      CatalogUrl: "localhost:8081"
+      IdentityUrl: "localhost:8082"
+      RentingUrl: "localhost:8083"
+      UserUrl: "localhost:8084"
+    ports:
+      - "8080:8080"
   
   catalog-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -41,101 +45,101 @@
     ports:
       - "8081:8081"
         
-#  identity-db:
-#    image: mcr.microsoft.com/mssql/server:2022-latest
-#    container_name: identity-db
-#    environment:
-#      ACCEPT_EULA: "Y"
-#      SA_PASSWORD: "Your_password123"
-#      MSSQL_PID: "Developer"
-#    ports:
-#      - "1433:1433"
-#    healthcheck:
-#      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
-#      interval: 5s
-#      timeout: 3s
-#      retries: 30
-#      start_period: 20s
-#    volumes:
-#      - identity_mssqldata:/var/opt/mssql
-#
-#  identity-service:
-#    build:
-#      context: .
-#      dockerfile: Services/BookRent.Identity/Dockerfile
-#    container_name: identity-service
-#    depends_on:
-#      identity-db:
-#        condition: service_healthy
-#    environment:
-#      ASPNETCORE_ENVIRONMENT: "Development"
-#      ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
-#    ports:
-#      - "8082:8082"
-#  
-#  renting-db:
-#    image: mcr.microsoft.com/mssql/server:2022-latest
-#    container_name: renting-db
-#    environment:
-#      ACCEPT_EULA: "Y"
-#      SA_PASSWORD: "Your_password123"
-#      MSSQL_PID: "Developer"
-#    ports:
-#      - "1433:1433"
-#    healthcheck:
-#      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
-#      interval: 5s
-#      timeout: 3s
-#      retries: 30
-#      start_period: 20s
-#    volumes:
-#      - renting_mssqldata:/var/opt/mssql
-#
-#  renting-service:
-#    build:
-#      context: .
-#      dockerfile: Services/BookRent.Renting/Dockerfile
-#    container_name: renting-service
-#    depends_on:
-#      renting-db:
-#        condition: service_healthy
-#    environment:
-#      ASPNETCORE_ENVIRONMENT: "Development"
-#      ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
-#    ports:
-#      - "8083:8083"
-#        
-#  user-db:
-#    image: mcr.microsoft.com/mssql/server:2022-latest
-#    container_name: user-db
-#    environment:
-#      ACCEPT_EULA: "Y"
-#      SA_PASSWORD: "Your_password123"
-#      MSSQL_PID: "Developer"
-#    ports:
-#      - "1433:1433"
-#    healthcheck:
-#      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
-#      interval: 5s
-#      timeout: 3s
-#      retries: 30
-#      start_period: 20s
-#    volumes:
-#      - user_mssqldata:/var/opt/mssql
-#
-#  user-service:
-#    build:
-#      context: .
-#      dockerfile: Services/BookRent.User/Dockerfile
-#    container_name: user-service
-#    depends_on:
-#      user-db:
-#        condition: service_healthy
-#    environment:
-#      ASPNETCORE_ENVIRONMENT: "Development"
-#      ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
-#    ports:
-#      - "8084:8084"
+  identity-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: identity-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Your_password123"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - identity_mssqldata:/var/opt/mssql
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: Services/BookRent.Identity/Dockerfile
+    container_name: identity-service
+    depends_on:
+      identity-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+    ports:
+      - "8082:8082"
+
+  renting-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: renting-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Your_password123"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - renting_mssqldata:/var/opt/mssql
+
+  renting-service:
+    build:
+      context: .
+      dockerfile: Services/BookRent.Renting/Dockerfile
+    container_name: renting-service
+    depends_on:
+      renting-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+    ports:
+      - "8083:8083"
+
+  user-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: user-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Your_password123"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - user_mssqldata:/var/opt/mssql
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Services/BookRent.User/Dockerfile
+    container_name: user-service
+    depends_on:
+      user-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+    ports:
+      - "8084:8084"
 
 volumes:
   catalog_mssqldata:
