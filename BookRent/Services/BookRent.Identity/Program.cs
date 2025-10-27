@@ -5,13 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddEnvironmentVariables();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+var cs = Environment.GetEnvironmentVariable("ConnectionStrings__IdentityDb")
+         ?? builder.Configuration.GetConnectionString("IdentityDb");
+
+
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddDbContext<IdentityDbContext>();
+builder.Services.AddDbContext<IdentityDbContext>(opt =>
+    opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
 builder.Services.AddScoped<IIdentityRepository, IdentityRepository>();
 
 
@@ -24,14 +26,13 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-app.MapIdentityEndPoints();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
     app.MapOpenApi();
 }
-
+app.MapIdentityEndPoints();
 app.UseHttpsRedirection();
 
 

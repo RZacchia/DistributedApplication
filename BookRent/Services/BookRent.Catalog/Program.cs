@@ -9,7 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
-builder.Services.AddDbContext<CatalogDbContext>();
+var cs = Environment.GetEnvironmentVariable("ConnectionStrings__CatalogDb")
+         ?? builder.Configuration.GetConnectionString("CatalogDb");
+
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

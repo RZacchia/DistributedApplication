@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
+var cs = Environment.GetEnvironmentVariable("ConnectionStrings__RentingDb")
+         ?? builder.Configuration.GetConnectionString("RentingDb");
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<RentingDbContext>();
+builder.Services.AddDbContext<RentingDbContext>(opt =>
+    opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
 builder.Services.AddScoped<IRentingRepository, RentingRepository>();
 
 
@@ -21,14 +22,12 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-
-app.MapRentingEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
     app.MapOpenApi();
 }
-
+app.MapRentingEndpoints();
 app.UseHttpsRedirection();
 
 

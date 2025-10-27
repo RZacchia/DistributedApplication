@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var cs = Environment.GetEnvironmentVariable("ConnectionStrings__UserDb")
+         ?? builder.Configuration.GetConnectionString("UserDb");
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<UserDbContext>();
+builder.Services.AddDbContext<UserDbContext>(opt =>
+    opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 
@@ -22,13 +25,13 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-app.MapUserEndpoints();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
     app.MapOpenApi();
 }
-
+app.MapUserEndpoints();
 app.UseHttpsRedirection();
 
 
