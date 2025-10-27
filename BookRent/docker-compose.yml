@@ -53,9 +53,9 @@
       SA_PASSWORD: "Your_password123"
       MSSQL_PID: "Developer"
     ports:
-      - "1433:1433"
+      - "1434:1434"
     healthcheck:
-      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1434", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -73,7 +73,7 @@
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__IdentityDb: "Server=identity-db,1434;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
       - "8082:8082"
 
@@ -85,9 +85,9 @@
       SA_PASSWORD: "Your_password123"
       MSSQL_PID: "Developer"
     ports:
-      - "1433:1433"
+      - "1435:1435"
     healthcheck:
-      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1435", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -105,7 +105,7 @@
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__RentingDb: "Server=renting-db,1435;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
       - "8083:8083"
 
@@ -117,9 +117,9 @@
       SA_PASSWORD: "Your_password123"
       MSSQL_PID: "Developer"
     ports:
-      - "1433:1433"
+      - "1436:1436"
     healthcheck:
-      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1433", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost,1436", "-U", "sa", "-P", "Your_password123", "-C", "-Q", "SELECT 1" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -137,7 +137,7 @@
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__UserDb: "Server=user-db,1436;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
       - "8084:8084"
 
