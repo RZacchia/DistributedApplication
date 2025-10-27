@@ -1,5 +1,6 @@
 using BookRent.Renting.Api;
 using BookRent.Renting.Infrastructure;
+using BookRent.Renting.Infrastructure.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<RentingDbContext>();
-
+builder.Services.AddScoped<IRentingRepository, RentingRepository>();
 
 
 var app = builder.Build();

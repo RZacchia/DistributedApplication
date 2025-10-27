@@ -1,3 +1,5 @@
+using BookRent.Catalog.Infrastructure.Interfaces;
+
 namespace BookRent.Catalog.Api;
 
 public static class CatalogEndpoints
@@ -13,13 +15,14 @@ public static class CatalogEndpoints
         group.MapPost("/removeBooks", RemoveBooks);
     }
 
-    private static IResult GetAllBooks(HttpRequest request)
+    private static IResult GetAllBooks(HttpRequest request,
+                                        IBookRepository repo)
     {
         
         return TypedResults.Ok("success");
     }
     
-    private static IResult GetBook(Guid id)
+    private static IResult GetBook(Guid id, HttpRequest request,  IBookRepository repo)
     {
         return Results.Ok();
     }

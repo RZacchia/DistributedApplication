@@ -1,5 +1,6 @@
 using BookRent.Identity.Api;
 using BookRent.Identity.Infrastructure;
+using BookRent.Identity.Infrastructure.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
@@ -9,7 +10,7 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<IdentityDbContext>();
-
+builder.Services.AddScoped<IIdentityRepository, IdentityRepository>();
 
 
 var app = builder.Build();

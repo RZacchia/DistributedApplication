@@ -10,6 +10,7 @@ public class BookCounter
 {
     [Key]
     public Guid BookId { get; set; }
-    public int Count { get; set; }
+    public int CurrentCount { get; set; }
+    public int MaxCount { get; set; }
     public DateTime UpdatedOn { get; set; }
 }

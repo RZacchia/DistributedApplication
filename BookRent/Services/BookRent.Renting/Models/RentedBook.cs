@@ -14,5 +14,6 @@ public class RentedBook
     public DateTime RentedOn { get; set; }
     [Required]
     public DateTime DueAt { get; set; }
+    public DateTime? ReturnedOn { get; set; }
     
 }

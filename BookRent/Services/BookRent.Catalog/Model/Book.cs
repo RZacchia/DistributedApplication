@@ -18,4 +18,5 @@ public class Book
     public required string Author { get; set; }
     [MaxLength(255)]
     public string? Description { get; set; }
+    public bool IsVisible { get; set; }
 }

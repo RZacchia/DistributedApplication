@@ -6,6 +6,7 @@ namespace BookRent.Identity.Infrastructure;
 public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : DbContext(options)
 {
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<UserCredentials> UserCredentials => Set<UserCredentials>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
