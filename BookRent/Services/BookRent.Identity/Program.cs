@@ -9,12 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 var cs = Environment.GetEnvironmentVariable("ConnectionStrings__IdentityDb")
          ?? builder.Configuration.GetConnectionString("IdentityDb");
 
-
-builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<IdentityDbContext>(opt =>
     opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
 builder.Services.AddScoped<IIdentityRepository, IdentityRepository>();
+builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+
 
 
 var app = builder.Build();

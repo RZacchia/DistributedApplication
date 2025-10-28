@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookRent.Identity.Infrastructure;
 
-internal class IdentityRepository : IIdentityRepository
+public class IdentityRepository : IIdentityRepository
 {
-    private IdentityDbContext Context { get; init; }
-    internal IdentityRepository(IdentityDbContext context)
+    private IdentityDbContext Context { get; }
+    public IdentityRepository(IdentityDbContext context)
     {
         Context = context;
     }

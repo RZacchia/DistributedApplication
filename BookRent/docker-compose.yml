@@ -35,10 +35,10 @@ services:
     container_name: orchestrator-service
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      CatalogUrl: "catalog-service:8080"
-      IdentityUrl: "identity-service:8080"
-      RentingUrl: "renting-service:8080"
-      UserUrl: "user-service:8080"
+      CATALOG_URL: "catalog-service:8080"
+      IDENTITY_URL: "identity-service:8080"
+      RENTING_URL: "renting-service:8080"
+      USER_URL: "user-service:8080"
     networks:
       - public-net
     ports:

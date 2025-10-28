@@ -3,7 +3,7 @@ using BookRent.Identity.Models;
 
 namespace BookRent.Identity.Infrastructure.Interfaces;
 
-internal interface IIdentityRepository
+public interface IIdentityRepository
 {
     Task<Role?> GetUserRoleAsync(Guid userId);
     Task<bool> IsUserInRoleOrHigherAsync(UserRole userRole);
