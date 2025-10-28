@@ -6,6 +6,7 @@ WORKDIR /src
 
 # Copy only the csproj first (faster restores)
 COPY Services/BookRent.Identity/BookRent.Identity.csproj Services/BookRent.Identity/
+COPY DTOs/BookRent.Identity.DTO/ DTOs/BookRent.Identity.DTO/
 RUN dotnet restore Services/BookRent.Identity/BookRent.Identity.csproj
 
 # Copy the rest of the project
