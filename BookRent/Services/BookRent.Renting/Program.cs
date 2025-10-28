@@ -9,8 +9,11 @@ var cs = Environment.GetEnvironmentVariable("ConnectionStrings__RentingDb")
          ?? builder.Configuration.GetConnectionString("RentingDb");
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<RentingDbContext>(opt =>
-    opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
+builder.Services.AddDbContext<RentingDbContext>(opt => 
+{
+    opt.UseSqlServer(cs);
+    opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5));
+});
 builder.Services.AddScoped<IRentingRepository, RentingRepository>();
 
 
