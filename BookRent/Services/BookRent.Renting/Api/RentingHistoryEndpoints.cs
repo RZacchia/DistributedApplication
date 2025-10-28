@@ -13,7 +13,7 @@ internal static class RentingHistoryEndpoints
         return TypedResults.Ok(result);
     }
     
-    internal static async Task<Results<Ok<List<RentedBook>>, NoContent>> GetCurrentlyRentBooks(Guid userId, HttpRequest request, IRentingRepository repo)
+    internal static async Task<Results<Ok<List<RentedBook>>, NoContent>> GetCurrentlyRentBooks(IRentingRepository repo)
     {
         var result = await repo.GetAllRentsAsync();
         if (!result.Any())
@@ -22,4 +22,6 @@ internal static class RentingHistoryEndpoints
         }
         return TypedResults.Ok(result);
     }
+    
+
 }

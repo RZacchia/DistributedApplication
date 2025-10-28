@@ -35,4 +35,11 @@ internal static class UserFavouritesEndpoints
         
         return Results.Ok();
     }
+    
+    internal static async Task<Results<Ok<int>, BadRequest>> RemoveBook(Guid bookId, IUserRepository repo)
+    {
+        int result = await repo.RemoveBookFAsync(bookId);
+        if (result < 0) return TypedResults.BadRequest();
+        return TypedResults.Ok(result);
+    }
 }

@@ -12,4 +12,5 @@ public interface IUserRepository
     Task<bool> RemoveBookFromUserFavouritesAsync(UserFavourites userFavourites);
     Task<bool> DeleteUserFavouritesListAsync(Guid userId);
     Task<List<UserFavourites>> GetUserFavouritesListAsync(Guid userId);
+    Task<int> RemoveBookFAsync(Guid bookId);
 }

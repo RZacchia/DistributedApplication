@@ -164,19 +164,16 @@ namespace BookRent.Orchestrator.Clients
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<RentedBook>> RentHistoryAsync(System.Guid userId)
+        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<RentedBook>> RentAllRentedBooksAsync()
         {
-            return RentHistoryAsync(userId, System.Threading.CancellationToken.None);
+            return RentAllRentedBooksAsync(System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<RentedBook>> RentHistoryAsync(System.Guid userId, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<RentedBook>> RentAllRentedBooksAsync(System.Threading.CancellationToken cancellationToken)
         {
-            if (userId == null)
-                throw new System.ArgumentNullException("userId");
-
             var client_ = _httpClient;
             var disposeClient_ = false;
             try
@@ -188,9 +185,8 @@ namespace BookRent.Orchestrator.Clients
 
                     var urlBuilder_ = new System.Text.StringBuilder();
                     if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "renting/rentHistory/{userId}"
-                    urlBuilder_.Append("renting/rentHistory/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(userId, System.Globalization.CultureInfo.InvariantCulture)));
+                    // Operation Path: "renting/rentAllRentedBooks"
+                    urlBuilder_.Append("renting/rentAllRentedBooks");
 
                     PrepareRequest(client_, request_, urlBuilder_);
 

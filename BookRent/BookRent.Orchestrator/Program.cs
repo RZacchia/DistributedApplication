@@ -1,4 +1,7 @@
+using BookRent.Orchestrator.Api;
 using BookRent.Orchestrator.Clients;
+using BookRent.Orchestrator.Services;
+using BookRent.Orchestrator.Services.Interfaces;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,9 +39,11 @@ builder.Services.AddHttpClient<UserClient>(client =>
     client.BaseAddress = new Uri(uri);
 });
 
+builder.Services.AddScoped<ICatalogService, CatalogService>();
+
 var app = builder.Build();
 
-
+app.MapOrchestratorEndpoints();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

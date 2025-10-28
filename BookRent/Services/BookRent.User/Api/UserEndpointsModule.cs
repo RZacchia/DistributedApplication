@@ -11,6 +11,8 @@ internal static class UserEndpointsModule
         group.MapGet("/favourites/{id:guid}", UserFavouritesEndpoints.GetFavourites);
         group.MapPost("/addFavourite/", UserFavouritesEndpoints.AddFavourite);
         group.MapDelete("/removeFavourite/{userId:guid}/{bookId:guid}", UserFavouritesEndpoints.RemoveFavourite);
+        group.MapDelete("/removeBooks/{bookId:guid}", UserFavouritesEndpoints.RemoveBook);
+
         
     }
 }

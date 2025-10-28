@@ -57,4 +57,11 @@ public class UserRepository : IUserRepository
         return await Context.UserFavourites.Where(u => u.UserId == userId)
             .ToListAsync();
     }
+
+    public async Task<int> RemoveBookFAsync(Guid bookId)
+    {
+        var result = Context.UserFavourites.Where(x => x.BookId == bookId).ToList();
+        Context.UserFavourites.RemoveRange(result);
+        return await Context.SaveChangesAsync();
+    }
 }

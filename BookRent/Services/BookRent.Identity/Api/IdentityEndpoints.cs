@@ -1,4 +1,5 @@
 using BookRent.Identity.DTO;
+using BookRent.Identity.DTO.Enums;
 using BookRent.Identity.Infrastructure.Interfaces;
 using BookRent.Identity.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -34,10 +35,10 @@ internal static class IdentityEndpoints
         return Results.Ok();
     }
     
-    internal static async Task<Results<Ok<string>, BadRequest>> GetUserRole(Guid id, IIdentityRepository repo)
+    internal static async Task<Results<Ok<Role?>, BadRequest>> GetUserRole(Guid id, IIdentityRepository repo)
     {
         var result = await repo.GetUserRoleAsync(id);
         if (result == null) return TypedResults.BadRequest();
-        return TypedResults.Ok(result.ToString());
+        return TypedResults.Ok(result);
     }
 }

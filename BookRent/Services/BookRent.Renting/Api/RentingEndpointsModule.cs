@@ -6,7 +6,7 @@ internal static class RentingEndpointsModule
     {
         RouteGroupBuilder group = app.MapGroup("/renting");
         group.MapGet("/allRentedBooks", RentingHistoryEndpoints.GetRentedBooks);
-        group.MapGet("/rentHistory/{userId:guid}", RentingHistoryEndpoints.GetCurrentlyRentBooks);
+        group.MapGet("/rentAllRentedBooks", RentingHistoryEndpoints.GetCurrentlyRentBooks);
         group.MapPost("/rentBooks", RentingActionsEndpoints.RentBooks);
         group.MapPost("/returnBooks", RentingActionsEndpoints.ReturnBooks);
         group.MapPost("/editBookCounter", RentingActionsEndpoints.EditBookCounter);
