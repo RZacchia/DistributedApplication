@@ -8,33 +8,33 @@ namespace BookRent.Catalog.Api;
 
 internal static class CatalogCustomerEndpoints
 {
-    internal static async Task<Results<Ok<List<Book>>, NotFound>> GetAllBooks(HttpRequest request,
+    internal static async Task<Results<Ok<List<Book>>, NoContent>> GetAllBooks(HttpRequest request,
         IBookRepository repo)
     {
         var result = await repo.GetBooksAsync();
         if (!result.Any())
         {
-            return TypedResults.NotFound();
+            return TypedResults.NoContent();
         }
         return TypedResults.Ok(result);
     }
     
-    internal static async Task<Results<Ok<Book>, NotFound>> GetBook(Guid id, HttpRequest request,  IBookRepository repo)
+    internal static async Task<Results<Ok<Book>, NoContent>> GetBook(Guid id, HttpRequest request,  IBookRepository repo)
     {
         var result = await repo.GetBookAsync(id);
         if (result is null)
         {
-            return TypedResults.NotFound();
+            return TypedResults.NoContent();
         }
         return TypedResults.Ok(result);
     }
     
-    internal static async Task<Results<Ok<List<Book>>, NotFound>> SearchBook([FromBody] BookSearchRequest request, IBookRepository repo)
+    internal static async Task<Results<Ok<List<Book>>, NoContent>> SearchBook([FromBody] BookSearchRequest request, IBookRepository repo)
     {
         var result = await repo.GetBooksByNameAsync(request.Name);
         if (result.Count == 0)
         {
-            return TypedResults.NotFound();
+            return TypedResults.NoContent();
         }
         return TypedResults.Ok(result);
     }

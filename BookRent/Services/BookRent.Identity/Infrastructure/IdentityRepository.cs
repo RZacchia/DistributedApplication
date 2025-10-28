@@ -1,24 +1,25 @@
+using BookRent.Identity.DTO.Enums;
 using BookRent.Identity.Infrastructure.Interfaces;
 using BookRent.Identity.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookRent.Identity.Infrastructure;
 
-public class IdentityRepository : IIdentityRepository
+internal class IdentityRepository : IIdentityRepository
 {
     private IdentityDbContext Context { get; init; }
-    public IdentityRepository(IdentityDbContext context)
+    internal IdentityRepository(IdentityDbContext context)
     {
         Context = context;
     }
     
     
-    public async Task<Role> GetUserRoleAsync(Guid userId)
+    public async Task<Role?> GetUserRoleAsync(Guid userId)
     {
         return await Context.UserRoles
             .Where(u => u.UserId == userId)
             .Select(u => u.Role)
-            .FirstAsync();
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> IsUserInRoleOrHigherAsync(UserRole userRole)
@@ -36,15 +37,11 @@ public class IdentityRepository : IIdentityRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<bool> RegisterUserAsync(UserCredentials userCredentials)
+    public async Task<bool> RegisterUserAsync(UserCredentials userCredentials, UserRole userRole)
     {
         await Context.UserCredentials.AddAsync(userCredentials);
-        return await Context.SaveChangesAsync() > 0;
+        await Context.UserRoles.AddAsync(userRole);
+        return await Context.SaveChangesAsync() == 2;
     }
 
-    public async Task<bool> AddUserRoleAsync(UserRole userRole)
-    {
-        await Context.UserRoles.AddAsync(userRole);
-        return await Context.SaveChangesAsync() > 0;
-    }
 }

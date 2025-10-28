@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using BookRent.Identity.DTO.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookRent.Identity.Models;

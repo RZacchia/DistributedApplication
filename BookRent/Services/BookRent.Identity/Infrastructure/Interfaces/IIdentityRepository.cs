@@ -1,13 +1,13 @@
+using BookRent.Identity.DTO.Enums;
 using BookRent.Identity.Models;
 
 namespace BookRent.Identity.Infrastructure.Interfaces;
 
-public interface IIdentityRepository
+internal interface IIdentityRepository
 {
-    Task<Role> GetUserRoleAsync(Guid userId);
+    Task<Role?> GetUserRoleAsync(Guid userId);
     Task<bool> IsUserInRoleOrHigherAsync(UserRole userRole);
     Task<Guid?> GetUserIdAsync(string userName, string password);
-    Task<bool> RegisterUserAsync(UserCredentials userCredentials);
-    Task<bool> AddUserRoleAsync(UserRole userRole);
+    Task<bool> RegisterUserAsync(UserCredentials userCredentials,  UserRole userRole);
 
 }
