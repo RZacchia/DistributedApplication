@@ -31,7 +31,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 app.MapRentingEndpoints();
-app.UseHttpsRedirection();
 
 
 

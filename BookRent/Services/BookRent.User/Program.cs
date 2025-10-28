@@ -32,7 +32,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 app.MapUserEndpoints();
-app.UseHttpsRedirection();
 
 
 
