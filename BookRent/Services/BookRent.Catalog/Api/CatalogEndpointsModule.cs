@@ -11,7 +11,8 @@ internal static class CatalogEndpointsModule
         group.MapGet("/books", CatalogCustomerEndpoints.GetAllBooks);
         group.MapGet("/books/search", CatalogCustomerEndpoints.SearchBook);
         group.MapGet("/book/{id:guid}", CatalogCustomerEndpoints.GetBook);
-        group.MapPost("/addBooks", CatalogEmployeeEndpoints.AddBooks);
-        group.MapPost("/removeBooks", CatalogEmployeeEndpoints.RemoveBooks);
+        group.MapPost("/addBook", CatalogEmployeeEndpoints.AddBook);
+        group.MapPost("/removeBook/{id:guid}", CatalogEmployeeEndpoints.RemoveBook);
+        group.MapPost("/updateBook", CatalogEmployeeEndpoints.UpdateBook);
     }
 }

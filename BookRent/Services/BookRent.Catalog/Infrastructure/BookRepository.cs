@@ -51,8 +51,10 @@ public class BookRepository : IBookRepository
         return await Context.SaveChangesAsync() == 1;
     }
 
-    public async Task<bool> DeleteBookAsync(Book book)
+    public async Task<bool> DeleteBookAsync(Guid id)
     {
+        var book = await Context.Books.FirstOrDefaultAsync(b => b.Id == id);
+        if (book == null) return false;
         Context.Books.Remove(book);
         return await Context.SaveChangesAsync() == 1;
     }

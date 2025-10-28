@@ -1,23 +1,41 @@
+using BookRent.Catalog.DTO;
 using BookRent.Catalog.Infrastructure.Interfaces;
+using BookRent.Catalog.Model;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookRent.Catalog.Api;
 
 internal static class CatalogCustomerEndpoints
 {
-    internal static IResult GetAllBooks(HttpRequest request,
+    internal static async Task<Results<Ok<List<Book>>, NotFound>> GetAllBooks(HttpRequest request,
         IBookRepository repo)
     {
-        
-        return TypedResults.Ok("success");
+        var result = await repo.GetBooksAsync();
+        if (!result.Any())
+        {
+            return TypedResults.NotFound();
+        }
+        return TypedResults.Ok(result);
     }
     
-    internal static IResult GetBook(Guid id, HttpRequest request,  IBookRepository repo)
+    internal static async Task<Results<Ok<Book>, NotFound>> GetBook(Guid id, HttpRequest request,  IBookRepository repo)
     {
-        return Results.Ok();
+        var result = await repo.GetBookAsync(id);
+        if (result is null)
+        {
+            return TypedResults.NotFound();
+        }
+        return TypedResults.Ok(result);
     }
     
-    internal static IResult SearchBook()
+    internal static async Task<Results<Ok<List<Book>>, NotFound>> SearchBook([FromBody] BookSearchRequest request, IBookRepository repo)
     {
-        return Results.Ok();
+        var result = await repo.GetBooksByNameAsync(request.Name);
+        if (result.Count == 0)
+        {
+            return TypedResults.NotFound();
+        }
+        return TypedResults.Ok(result);
     }
 }

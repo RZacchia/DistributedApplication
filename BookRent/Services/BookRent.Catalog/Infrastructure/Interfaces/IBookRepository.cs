@@ -9,5 +9,5 @@ public interface IBookRepository
     public Task<List<Book>> GetBooksByNameAsync(string name);
     public Task<bool> AddBookAsync(Book book);
     public Task<bool> UpdateBookAsync(Book book);
-    public Task<bool> DeleteBookAsync(Book book);
+    public Task<bool> DeleteBookAsync(Guid id);
 }
