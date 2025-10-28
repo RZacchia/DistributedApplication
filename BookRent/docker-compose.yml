@@ -2,6 +2,11 @@
   ACCEPT_EULA: "Y"
   MSSQL_PID: "Express"
   SA_PASSWORD: "Your_SA_Password_123!"
+  
+x-mssql-command: &mssql-command
+  /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Your_SA_Password_123!" -Q "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'max server memory (MB)', 1024; RECONFIGURE;"
+
+
 
 x-mssql-healthcheck: &mssql-healthcheck
   test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Your_SA_Password_123!", "-Q", "SELECT 1"]
@@ -9,6 +14,13 @@ x-mssql-healthcheck: &mssql-healthcheck
   timeout: 3s
   retries: 20
   start_period: 20s
+  
+x-mssql-resources: &mssql-resources
+  limits:
+    memory: 3g
+    cpus: 1
+  reservations:
+    memory: 2.0g
 
 services:
   orchestrator-service:
@@ -18,16 +30,19 @@ services:
     container_name: orchestrator-service
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      CatalogUrl: "localhost:8081"
-      IdentityUrl: "localhost:8082"
-      RentingUrl: "localhost:8083"
-      UserUrl: "localhost:8084"
+      CatalogUrl: "catalog-service:8080"
+      IdentityUrl: "identity-service:8080"
+      RentingUrl: "renting-service:8080"
+      UserUrl: "user-service:8080"
     ports:
       - "8080:8080"
   
   catalog-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: catalog-db
+    deploy:
+      resources:
+        *mssql-resources
     environment:
       <<: *mssql-env
     ports:
@@ -44,12 +59,14 @@ services:
     container_name: catalog-service
     depends_on:
       catalog-db:
-        condition: service_healthy
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__CatalogDb: "Server=catalog-db,1433;Database=CatalogDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
-      - "8081:8081"
+      - "8081:8080"
+    restart: "always"
+    
         
   identity-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -70,12 +87,12 @@ services:
     container_name: identity-service
     depends_on:
       identity-db:
-        condition: service_healthy
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
-      - "8082:8082"
+      - "8082:8080"
 
   renting-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -96,12 +113,12 @@ services:
     container_name: renting-service
     depends_on:
       renting-db:
-        condition: service_healthy
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
-      - "8083:8083"
+      - "8083:8080"
 
   user-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -122,12 +139,12 @@ services:
     container_name: user-service
     depends_on:
       user-db:
-        condition: service_healthy
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
     ports:
-      - "8084:8084"
+      - "8084:8080"
 
 volumes:
   catalog_mssqldata:
