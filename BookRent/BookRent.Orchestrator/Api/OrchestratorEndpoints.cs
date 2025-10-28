@@ -1,6 +1,8 @@
 namespace BookRent.Orchestrator.Api;
 
-public class OrchestratorEndpoints
+public static class OrchestratorEndpoints
 {
-    
+    public static void MapOrchestratorEndpoints(this IEndpointRouteBuilder app)
+    {
+    }   
 }
