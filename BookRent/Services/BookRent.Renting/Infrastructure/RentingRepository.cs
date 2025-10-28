@@ -59,8 +59,13 @@ public class RentingRepository : IRentingRepository
     {
         return await Context.RentedBooks.Where(o => o.UserId == customerId && o.ReturnedOn == null).ToListAsync();
     }
+    
+    public async Task<List<RentedBook>> GetAllRentsAsync()
+    {
+        return await Context.RentedBooks.Where(o => o.ReturnedOn == null).ToListAsync();
+    }
 
-    public async Task<List<RentedBook>> GetRentsAsync(Guid customerId)
+    public async Task<List<RentedBook>> GetRentHistoryAsync(Guid customerId)
     {
         return await Context.RentedBooks.Where(o => o.UserId == customerId).ToListAsync();
     }
