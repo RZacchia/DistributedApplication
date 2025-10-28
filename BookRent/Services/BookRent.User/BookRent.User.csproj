@@ -22,4 +22,8 @@
         <PackageReference Include="Scalar.AspNetCore" Version="2.9.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\DTOs\BookRent.User.DTO\BookRent.User.DTO.csproj" />
+    </ItemGroup>
+
 </Project>

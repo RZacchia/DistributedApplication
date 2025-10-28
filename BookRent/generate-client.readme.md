@@ -49,3 +49,11 @@ nswag openapi2csclient \
   /output:./BookRent.Orchestrator/Clients/UserClient.g.cs \
   /GenerateExceptionClasses:false
 ```
+
+PublicOrchestrationClient
+```bash
+nswag openapi2tsclient \
+  /input:http://localhost:8080/openapi/v1.json \
+  /classname:apiClient \
+  /output:../BookRent.WebClient/src/Client/apiClient.g.ts
+```

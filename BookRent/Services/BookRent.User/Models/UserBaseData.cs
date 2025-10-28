@@ -6,14 +6,14 @@ namespace BookRent.User.Models;
 public class UserBaseData
 {
     [Key]   
-    public Guid UserId { get; init; } = Guid.NewGuid();
+    public required Guid UserId { get; init; }
     [MaxLength(50), Required]
-    public required string UserName { get; set; }
+    public required string UserName { get; init; }
     [MaxLength(50), Required]
-    public required string FirstName { get; set; }
+    public required string FirstName { get; init; }
     [MaxLength(50), Required]
-    public required string LastName { get; set; }
+    public required string LastName { get; init; }
     [MaxLength(50), Required]
-    public required string Email { get; set; }
+    public required string Email { get; init; }
     
 }

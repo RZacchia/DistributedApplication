@@ -6,10 +6,11 @@ internal static class UserEndpointsModule
     {
         RouteGroupBuilder group = app.MapGroup("/user");
 
-        group.MapGet("/userDetails", UserDataEndpoints.GetUser);
-        group.MapGet("/favourites", UserFavouritesEndpoints.GetFavourites);
-        group.MapPost("/addFavourite", UserFavouritesEndpoints.AddFavourite);
-        group.MapDelete("/removeFavourite", UserFavouritesEndpoints.RemoveFavourite);
+        group.MapGet("/userDetails/{id:guid}", UserDataEndpoints.GetUser);
+        group.MapPost("/userDetails/add", UserDataEndpoints.AddUserDetails);
+        group.MapGet("/favourites/{id:guid}", UserFavouritesEndpoints.GetFavourites);
+        group.MapPost("/addFavourite/", UserFavouritesEndpoints.AddFavourite);
+        group.MapDelete("/removeFavourite/{userId:guid}/{bookId:guid}", UserFavouritesEndpoints.RemoveFavourite);
         
     }
 }
