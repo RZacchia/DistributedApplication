@@ -5,6 +5,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9F38F552-093B-4F67-B082-2FB4DBBC1AA2}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
+		generate-client.readme.md = generate-client.readme.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookRent.User", "Services\BookRent.User\BookRent.User.csproj", "{22A335BB-9DDD-48F1-8139-B3F7571C9DA9}"
