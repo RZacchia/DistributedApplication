@@ -71,7 +71,7 @@ services:
         condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__CatalogDb: "Server=catalog-db,1433;Database=CatalogDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__CatalogDb: "Server=catalog-db,1433;Database=CatalogDb;User Id=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;"
     networks:
       - public-net
       - catalog-net
@@ -79,6 +79,8 @@ services:
       - "8081:8080"
     restart: "always"
     
+        
+        
         
         
         
@@ -106,7 +108,7 @@ services:
         condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__IdentityDb: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;"
     networks:
       - public-net
       - identity-net
@@ -136,7 +138,7 @@ services:
         condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__RentingDb: "Server=renting-db,1433;Database=RentingDb;User Id=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;"
     networks:
       - public-net
       - renting-net
@@ -166,7 +168,7 @@ services:
         condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      ConnectionStrings__UserDb: "Server=user-db,1433;Database=UserDb;User Id=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;"
     networks:
       - public-net
       - user-net
