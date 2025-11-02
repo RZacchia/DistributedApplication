@@ -39,3 +39,24 @@ NAME       STATUS   ROLES           AGE     VERSION
 bookrent   Ready    control-plane   2m12s   v1.34.0
 
 ```
+## Build Catalog Docker Image
+```bash
+docker build -t bookrent-catalog:0.1 \
+  -f Services/BookRent.Catalog/Dockerfile \
+  Services/BookRent.Catalog
+
+```
+sql-secret.yaml
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mssql-secret
+type: Opaque
+stringData:
+  SA_PASSWORD: "Your_SA_Password_123!"
+```
+apply
+```bash
+kubectl apply -f k8s/secret-sql.yaml -n bookrent
+```

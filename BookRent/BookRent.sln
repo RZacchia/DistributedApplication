@@ -28,6 +28,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookRent.Renting.DTO", "DTO
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookRent.Orchestrator", "BookRent.Orchestrator\BookRent.Orchestrator.csproj", "{EA2D88EB-A7DC-4316-97A6-67EC309DDF34}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{4BDF3AF3-09A2-4D8C-B417-2F8545F0E6DD}"
+	ProjectSection(SolutionItems) = preProject
+		k8s\sql-secrety.yaml = k8s\sql-secrety.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
