@@ -27,8 +27,4 @@
       <Folder Include="Migrations\" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\DTOs\BookRent.Catalog.DTO\BookRent.Catalog.DTO.csproj" />
-    </ItemGroup>
-
 </Project>

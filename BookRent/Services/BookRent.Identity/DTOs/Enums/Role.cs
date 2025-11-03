@@ -1,4 +1,4 @@
-namespace BookRent.Identity.DTO.Enums;
+namespace BookRent.Identity.DTOs.Enums;
 
 public enum Role
 {

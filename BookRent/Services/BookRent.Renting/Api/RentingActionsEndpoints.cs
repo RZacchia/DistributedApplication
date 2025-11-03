@@ -1,4 +1,4 @@
-using BookRent.Renting.DTO;
+using BookRent.Renting.DTOs;
 using BookRent.Renting.Infrastructure.Interfaces;
 using BookRent.Renting.Models;
 using Microsoft.AspNetCore.Http.HttpResults;

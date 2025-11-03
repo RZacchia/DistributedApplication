@@ -1,4 +1,4 @@
-namespace BookRent.Renting.DTO;
+namespace BookRent.Renting.DTOs;
 
 public record ReturnBookRequest(Guid UserId, Guid BookId);
 public record RentBookRequest(Guid UserId, Guid BookId);

@@ -1,4 +1,4 @@
-namespace BookRent.Catalog.DTO;
+namespace BookRent.Catalog.DTOs;
 
 public record BookSearchRequest(string Name);
 public record AddBookRequest(string Name, string Description, string Author, string Isbn);

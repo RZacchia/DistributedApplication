@@ -1,4 +1,4 @@
-using BookRent.Identity.DTO.Enums;
+using BookRent.Identity.DTOs.Enums;
 using BookRent.Identity.Infrastructure.Interfaces;
 using BookRent.Identity.Models;
 using Microsoft.EntityFrameworkCore;

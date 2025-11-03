@@ -1,4 +1,4 @@
-using BookRent.Identity.DTO.Enums;
+using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Api.Requests;
 using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Services.Interfaces;
@@ -26,7 +26,7 @@ public class CatalogService : ICatalogService
     public async Task<IResult> RemoveFromCatalogSaga(RemoveFromCatalogRequest request)
     {
         var role = await _identityClient.RoleAsync(request.UserId);
-        bool isPermitted = (Role) role > Role.CUSTOMER;
+        bool isPermitted = role > 1; // TODO
         if (!isPermitted) return TypedResults.Unauthorized();
 
         var book = await _catalogClient.BookAsync(request.BookId);

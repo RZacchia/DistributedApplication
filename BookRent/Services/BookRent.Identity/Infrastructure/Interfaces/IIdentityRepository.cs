@@ -1,4 +1,4 @@
-using BookRent.Identity.DTO.Enums;
+using BookRent.Identity.DTOs.Enums;
 using BookRent.Identity.Models;
 
 namespace BookRent.Identity.Infrastructure.Interfaces;

@@ -1,7 +1,7 @@
-using BookRent.User.DTO;
 using BookRent.User.Infrastructure.Interfaces;
 using BookRent.User.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using UserFavouriteResponse = BookRent.User.DTOs.UserFavouriteResponse;
 
 namespace BookRent.User.Api;
 

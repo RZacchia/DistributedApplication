@@ -1,8 +1,9 @@
-using BookRent.User.DTO;
 using BookRent.User.Infrastructure.Interfaces;
 using BookRent.User.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using UserDetailsRequest = BookRent.User.DTOs.UserDetailsRequest;
+using UserDetailsResponse = BookRent.User.DTOs.UserDetailsResponse;
 
 namespace BookRent.User.Api;
 
