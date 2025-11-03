@@ -8,10 +8,10 @@ namespace BookRent.Orchestrator.Services;
 
 public class CatalogService : ICatalogService
 {
-    private CatalogClient _catalogClient;
-    private IdentityClient _identityClient;
-    private RentingClient _rentingClient;
-    private UserClient _userClient;
+    private readonly CatalogClient _catalogClient;
+    private readonly IdentityClient _identityClient;
+    private readonly RentingClient _rentingClient;
+    private readonly UserClient _userClient;
 
 
     public CatalogService(CatalogClient catalogClient, IdentityClient identityClient, RentingClient rentingClient, UserClient userClient)

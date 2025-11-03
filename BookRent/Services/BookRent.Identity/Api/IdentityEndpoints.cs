@@ -17,6 +17,13 @@ internal static class IdentityEndpoints
         return TypedResults.Ok(id.ToString());
     }
     
+    internal static async Task<Results<Ok<string>, BadRequest>> Logout([FromBody] LoginRequest request, IIdentityRepository repo)
+    {
+        var id = await repo.GetUserIdAsync(request.Email, request.Password);
+        if (id == null) return TypedResults.BadRequest();
+        return TypedResults.Ok(id.ToString());
+    }
+    
     internal static async Task<IResult> Register([FromBody] RegisterOnStoreRequest request, IIdentityRepository repo)
     {
         var userRole = new UserRole

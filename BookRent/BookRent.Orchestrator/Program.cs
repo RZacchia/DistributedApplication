@@ -51,5 +51,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseHttpsRedirection();
+
 app.Run();
 

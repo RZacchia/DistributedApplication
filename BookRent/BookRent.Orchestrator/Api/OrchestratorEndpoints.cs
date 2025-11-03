@@ -7,7 +7,7 @@ public static class OrchestratorEndpoints
         RouteGroupBuilder identityGroup = app.MapGroup("/api/v1/catalog");
 
         identityGroup.MapPost("/removeFromCatalog/{bookId:guid}", EmployeeOrchestrationSagas.RemoveBookFromCatalogSaga);
-    }   
+    }  
     
     
     

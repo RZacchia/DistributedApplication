@@ -1,10 +1,8 @@
 using BookRent.Orchestrator.Api.Requests;
-using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Services.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookRent.Orchestrator;
+namespace BookRent.Orchestrator.Api;
 
 internal static class EmployeeOrchestrationSagas
 {

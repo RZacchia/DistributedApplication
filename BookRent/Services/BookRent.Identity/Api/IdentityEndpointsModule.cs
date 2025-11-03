@@ -6,8 +6,9 @@ internal static class IdentityEndpointsModule
     {
         RouteGroupBuilder group = app.MapGroup("/identity");
 
-        group.MapGet("/login", IdentityEndpoints.Login);
+        group.MapPost("/login", IdentityEndpoints.Login);
         group.MapPost("/register", IdentityEndpoints.Register);
+        group.MapPost("/logout", IdentityEndpoints.Logout);
         group.MapGet("/role/{id:guid}", IdentityEndpoints.GetUserRole);
     }
     
