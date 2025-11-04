@@ -1,18 +1,23 @@
+# =========================
+# CATALOG DB (StatefulSet)
+# =========================
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: catalog-sql
+  name: catalog-db
+  namespace: bookrent
   labels:
-    app: catalog-sql
+    app: catalog-db
 spec:
+  serviceName: catalog-db
   replicas: 1
   selector:
     matchLabels:
-      app: catalog-sql
+      app: catalog-db
   template:
     metadata:
       labels:
-        app: catalog-sql
+        app: catalog-db
     spec:
       containers:
         - name: mssql
@@ -23,45 +28,65 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: MSSQL_PID
-              value: "Developer"
+              value: "Express"
             - name: SA_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mssql-secret
                   key: SA_PASSWORD
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "1"
           volumeMounts:
             - name: mssqldata
               mountPath: /var/opt/mssql
-      volumes:
-        - name: mssqldata
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldata
+        labels:
+          app: catalog-db
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: catalog-sql
+  name: catalog-db
+  namespace: bookrent
 spec:
   selector:
-    app: catalog-sql
+    app: catalog-db
   ports:
     - port: 1433
       targetPort: 1433
 ---
+# =========================
+# IDENTITY DB (StatefulSet)
+# =========================
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: renting-sql
+  name: identity-db
+  namespace: bookrent
   labels:
-    app: renting-sql
+    app: identity-db
 spec:
+  serviceName: identity-db
   replicas: 1
   selector:
     matchLabels:
-      app: renting-sql
+      app: identity-db
   template:
     metadata:
       labels:
-        app: renting-sql
+        app: identity-db
     spec:
       containers:
         - name: mssql
@@ -72,45 +97,65 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: MSSQL_PID
-              value: "Developer"
+              value: "Express"
             - name: SA_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mssql-secret
                   key: SA_PASSWORD
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "1"
           volumeMounts:
             - name: mssqldata
               mountPath: /var/opt/mssql
-      volumes:
-        - name: mssqldata
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldata
+        labels:
+          app: identity-db
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: renting-sql
+  name: identity-db
+  namespace: bookrent
 spec:
   selector:
-    app: renting-sql
+    app: identity-db
   ports:
     - port: 1433
       targetPort: 1433
 ---
+# =========================
+# RENTING DB (StatefulSet)
+# =========================
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: user-sql
+  name: renting-db
+  namespace: bookrent
   labels:
-    app: user-sql
+    app: renting-db
 spec:
+  serviceName: renting-db
   replicas: 1
   selector:
     matchLabels:
-      app: user-sql
+      app: renting-db
   template:
     metadata:
       labels:
-        app: user-sql
+        app: renting-db
     spec:
       containers:
         - name: mssql
@@ -121,45 +166,65 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: MSSQL_PID
-              value: "Developer"
+              value: "Express"
             - name: SA_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mssql-secret
                   key: SA_PASSWORD
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "1"
           volumeMounts:
             - name: mssqldata
               mountPath: /var/opt/mssql
-      volumes:
-        - name: mssqldata
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldata
+        labels:
+          app: renting-db
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-sql
+  name: renting-db
+  namespace: bookrent
 spec:
   selector:
-    app: user-sql
+    app: renting-db
   ports:
     - port: 1433
       targetPort: 1433
 ---
+# =========================
+# USER DB (StatefulSet)
+# =========================
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: identity-sql
+  name: user-db
+  namespace: bookrent
   labels:
-    app: identity-sql
+    app: user-db
 spec:
+  serviceName: user-db
   replicas: 1
   selector:
     matchLabels:
-      app: identity-sql
+      app: user-db
   template:
     metadata:
       labels:
-        app: identity-sql
+        app: user-db
     spec:
       containers:
         - name: mssql
@@ -170,26 +235,41 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: MSSQL_PID
-              value: "Developer"
+              value: "Express"
             - name: SA_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mssql-secret
                   key: SA_PASSWORD
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "1"
           volumeMounts:
             - name: mssqldata
               mountPath: /var/opt/mssql
-      volumes:
-        - name: mssqldata
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldata
+        labels:
+          app: user-db
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: identity-sql
+  name: user-db
+  namespace: bookrent
 spec:
   selector:
-    app: identity-sql
+    app: user-db
   ports:
     - port: 1433
       targetPort: 1433

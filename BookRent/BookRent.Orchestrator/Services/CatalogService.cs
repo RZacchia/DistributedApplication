@@ -1,8 +1,6 @@
 using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Api.Requests;
-using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Services.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace BookRent.Orchestrator.Services;
 

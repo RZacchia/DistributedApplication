@@ -5,10 +5,6 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 COPY BookRent.Orchestrator/BookRent.Orchestrator.csproj BookRent.Orchestrator/
-COPY DTOs/BookRent.Catalog.DTO/ DTOs/BookRent.Catalog.DTO/
-COPY DTOs/BookRent.Identity.DTO/ DTOs/BookRent.Identity.DTO/
-COPY DTOs/BookRent.Renting.DTO/ DTOs/BookRent.Renting.DTO/
-COPY DTOs/BookRent.User.DTO/ DTOs/BookRent.User.DTO/
 
 RUN dotnet restore BookRent.Orchestrator/BookRent.Orchestrator.csproj
 

@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{4BDF3AF3-09A
 		k8s\sql.yaml = k8s\sql.yaml
 		k8s\services.yaml = k8s\services.yaml
 		k8s\orchestrator_ingress.yaml = k8s\orchestrator_ingress.yaml
+		k8s\ingress-dev.yaml = k8s\ingress-dev.yaml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookRent.Catalog.Tests", "Services\BookRent.Catalog.Tests\BookRent.Catalog.Tests.csproj", "{334F6D1B-F824-4CCF-A0B5-B1ADBE52ED59}"

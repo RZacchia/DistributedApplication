@@ -20,6 +20,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: api-gateway
+                name: orchestrator-service
                 port:
                   number: 80
