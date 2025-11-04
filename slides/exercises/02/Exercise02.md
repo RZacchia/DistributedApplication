@@ -1,5 +1,5 @@
 # Exercise 02 - Robert Zacchia
-# Installation
+## Installation
 Installation is pretty straight forward in Ubuntu. I used the snap package for kubectl, and downloaded the binary for minikube.
 ```bash
 sudo snap install kubectl --classic
@@ -22,13 +22,13 @@ Client Version: v1.34.1
 Kustomize Version: v5.7.1
 Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to
 ```
-# Configuration
+## Configuration
 The Configuration can be split into 3 parts
 1. Creating the images for the application
 2. Setting up deployment scripts
 3. Applying them to the cluster
 
-## 1. Images for the application
+### 1. Images for the application
 I decided to keep the application BookRent which I used in exercise 01.
 BookRent consists of 5 Services and 4 Databases.
 
@@ -46,8 +46,8 @@ Since I already had Dockerfiles and a docker-compose file set up for the project
 docker-compose build --no-cache --parallel 
 ```
 
-## 2. Setting up deployment
-### 2.1 Resource setup
+### 2. Setting up deployment
+#### 2.1 Resource setup
 Before I can setup the deployment I first needed to setup an environment and checked the status.
 ```bash
 minikube start --profile=bookrent --driver=docker --cpus=4 --memory=12g
@@ -79,7 +79,7 @@ NAME       STATUS   ROLES           AGE     VERSION
 bookrent   Ready    control-plane   2m12s   v1.34.0
 ```
 
-### 2.2 Setup Databases
+#### 2.2 Setup Databases
 Before I setup the database, I made an sql-secrety.yaml file to store the password for the databases.
 In real applications this file should not be in the source control but I included it for that example.
 I also use the same credentials for all databases.
@@ -92,10 +92,114 @@ type: Opaque
 stringData:
   SA_PASSWORD: "Your_SA_Password_123!"
 ```
-This helps me to set the password in the databases and services.
+This helps me to set the password in the databases.
 
-The databases consist of multiple statefulsets which are defined in the sql.yaml file
+The databases consist of multiple statefulsets which are defined in the sql.yaml file.
+
+```yaml
+# =========================
+# CATALOG DB (StatefulSet)
+# =========================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: catalog-db
+  namespace: bookrent
+  labels:
+    app: catalog-db
+spec:
+  serviceName: catalog-db
+  replicas: 1
+  ...
+  spec:
+    containers:
+      - name: mssql
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+          - containerPort: 1433
+        env:
+         ...
+          - name: SA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mssql-secret
+                key: SA_PASSWORD
+        resources:
+          ...
+        volumeMounts:
+          - name: mssqldata
+            mountPath: /var/opt/mssql
+    volumeClaimTemplates:
+      -...
+```
+Furthermore I add services to each database to have persistent communication between the different parts of the distributed application.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-db
+  namespace: bookrent
+spec:
+  selector:
+    app: catalog-db
+  ports:
+    - port: 1433
+      targetPort: 1433
+
+```
+
+#### 2.3 Setup APIs
+The Apis are setup similar except that they are Deployments and not StatefulSets.
+
+#### 2.4 Create SSL and Ingress and Network policies
+
+To be able to use the application via https we have to create an SSL certificate at first.
+Please note that self signed certificates will cause warnings in most modern browsers.
+```bash
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout api-bookrent.key \
+  -out api-bookrent.crt \
+  -subj "/CN=api.bookrent.local/O=api.bookrent.local"
+  
+kubectl create secret tls bookrent-tls \
+  --cert=api-bookrent.crt \
+  --key=api-bookrent.key \
+  -n bookrent
+```
+
+The ingress can be found in orchestrator_ingress.yaml
+The ingress setup ensures, that only that named service can be called from outside.
+
+The networkpolicy ensures, that every catalog-db can only be called from a catalog-service.
 
 
 
-## 3. After the
+### 3. Startup After Setup
+After the Cluster files are generated they need to be executed in the following order.
+
+```bash
+# 1) secret
+kubectl apply -f k8s/sql-secrety.yaml
+
+# 2) DBs (persistent)
+kubectl apply -f k8s/sql.yaml
+
+# 3) APIs / services
+kubectl apply -f k8s/services.yaml
+
+# 4) NetworkPolicies 
+kubectl apply -f k8s/network-policy.yaml
+
+# 5) Ingress (prod + dev)
+kubectl apply -f k8s/orchestrator_ingress.yaml
+```
+To get the ip adress of the ingress and see if the cluster runs
+```bash
+minikube addons enable ingress --profile=bookrent
+minikube ip --profile=bookrent
+kubectl get ingress -n bookrent
+```
+
+
+Sadly I could not fix the application, since I still have a problem with crashing during startup
