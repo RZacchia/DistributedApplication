@@ -39,12 +39,9 @@ NAME       STATUS   ROLES           AGE     VERSION
 bookrent   Ready    control-plane   2m12s   v1.34.0
 
 ```
-## Build Catalog Docker Image
+## Build Docker Images
 ```bash
-docker build -t bookrent-catalog:0.1 \
-  -f Services/BookRent.Catalog/Dockerfile \
-  Services/BookRent.Catalog
-
+docker-compose build --no-cache
 ```
 sql-secret.yaml
 ```yaml
@@ -59,4 +56,56 @@ stringData:
 apply
 ```bash
 kubectl apply -f k8s/secret-sql.yaml -n bookrent
+
+kubectl config use-context bookrent
+kubectl config set-context --current --namespace=bookrent
+
+kubectl apply -f k8s/sqls.yaml -n bookrent
+
+```
+
+- catalog-sql:1433
+- renting-sql:1433
+- user-sql:1433
+- identity-sql:1433
+
+```bash
+kubectl apply -f k8s/services.yaml -n bookrent
+kubectl get pods -n bookrent
+kubectl get svc -n bookrent
+```
+
+Now, inside the cluster, you have:
+
+- catalog-api → http://catalog-api
+- renting-api → http://renting-api
+- user-api → http://user-api
+- identity-api → http://identity-api
+
+```bash
+minikube addons enable ingress --profile=bookrent
+minikube ip --profile=bookrent
+```
+
+Edit /etc/hosts
+```
+192.168.49.2   api.bookrent.local
+192.168.49.2   dev.bookrent.local
+
+```
+
+self signed ssl and create the secret in bookrent cluster
+```bash
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout api-bookrent.key \
+  -out api-bookrent.crt \
+  -subj "/CN=api.bookrent.local/O=api.bookrent.local"
+
+
+kubectl create secret tls bookrent-tls \
+  --cert=api-bookrent.crt \
+  --key=api-bookrent.key \
+  -n bookrent
+
 ```

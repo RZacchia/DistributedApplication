@@ -114,6 +114,8 @@ services:
       - identity-net
     ports:
       - "8082:8080"
+    restart: "always"
+
 
   renting-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -144,6 +146,7 @@ services:
       - renting-net
     ports:
       - "8083:8080"
+    restart: "always"
 
   user-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -174,6 +177,8 @@ services:
       - user-net
     ports:
       - "8084:8080"
+    restart: "always"
+
 
 volumes:
   catalog_mssqldata:
