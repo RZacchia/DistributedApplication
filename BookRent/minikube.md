@@ -32,6 +32,7 @@ kubeconfig: Configured
 
 kubectl config use-context bookrent
 Switched to context "bookrent".
+kubectl config set-context --current --namespace=bookrent
 
 
 kubectl get nodes
