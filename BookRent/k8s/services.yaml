@@ -1,22 +1,69 @@
+
+# =========================
+# ORCHESTRATOR (API GATEWAY + API)
+# =========================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: catalog-api
+  name: orchestrator-service
+  namespace: bookrent
   labels:
-    app: catalog-api
+    app: orchestrator-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: catalog-api
+      app: orchestrator-service
   template:
     metadata:
       labels:
-        app: catalog-api
+        app: orchestrator-service
     spec:
       containers:
-        - name: catalog-api
-          image: bookrent-catalog:latest
+        - name: orchestrator-service
+          image: bookrent_orchestrator-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator-service
+  namespace: bookrent
+spec:
+  selector:
+    app: orchestrator-service
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    app: catalog-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+        - name: catalog-service
+          image: bookrent_catalog-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -24,15 +71,15 @@ spec:
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
             - name: ConnectionStrings__CatalogDb
-              value: "Server=catalog-sql,1433;Database=CatalogDb;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
+              value: "Server=catalog-sql,1433;Database=CatalogDb;User=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: catalog-api
+  name: catalog-service
 spec:
   selector:
-    app: catalog-api
+    app: catalog-service
   ports:
     - port: 80
       targetPort: 8080
@@ -40,22 +87,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: renting-api
+  name: renting-service
   labels:
-    app: renting-api
+    app: renting-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: renting-api
+      app: renting-service
   template:
     metadata:
       labels:
-        app: renting-api
+        app: renting-service
     spec:
       containers:
-        - name: renting-api
-          image: bookrent-renting:latest
+        - name: renting-service
+          image: bookrent_renting-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -63,15 +110,15 @@ spec:
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
             - name: ConnectionStrings__RentingDb
-              value: "Server=renting-sql,1433;Database=RentingDb;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
+              value: "Server=renting-sql,1433;Database=RentingDb;User=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: renting-api
+  name: renting-service
 spec:
   selector:
-    app: renting-api
+    app: renting-service
   ports:
     - port: 80
       targetPort: 8080
@@ -79,22 +126,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-api
+  name: user-service
   labels:
-    app: user-api
+    app: user-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-api
+      app: user-service
   template:
     metadata:
       labels:
-        app: user-api
+        app: user-service
     spec:
       containers:
-        - name: user-api
-          image: bookrent-user:latest
+        - name: user-service
+          image: bookrent_user-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -102,15 +149,15 @@ spec:
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
             - name: ConnectionStrings__UserDb
-              value: "Server=user-sql,1433;Database=UserDb;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
+              value: "Server=user-sql,1433;Database=UserDb;User=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-api
+  name: user-service
 spec:
   selector:
-    app: user-api
+    app: user-service
   ports:
     - port: 80
       targetPort: 8080
@@ -118,22 +165,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: identity-api
+  name: identity-service
   labels:
-    app: identity-api
+    app: identity-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: identity-api
+      app: identity-service
   template:
     metadata:
       labels:
-        app: identity-api
+        app: identity-service
     spec:
       containers:
-        - name: identity-api
-          image: bookrent-identity:latest
+        - name: identity-service
+          image: bookrent_identity_service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -141,15 +188,15 @@ spec:
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
             - name: ConnectionStrings__IdentityDb
-              value: "Server=identity-sql,1433;Database=IdentityDb;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
+              value: "Server=identity-sql,1433;Database=IdentityDb;User=sa;Password=Your_SA_Password_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: identity-api
+  name: identity-service
 spec:
   selector:
-    app: identity-api
+    app: identity-service
   ports:
     - port: 80
       targetPort: 8080
