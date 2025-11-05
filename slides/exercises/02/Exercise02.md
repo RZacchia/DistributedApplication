@@ -40,6 +40,50 @@ BookRent consists of 5 Services and 4 Databases.
 | user-service         | user-db       | False             |
 | orchestrator-service | None          | True              |
 
+
+
+
+
+### 2. Setting up deployment
+#### 2.1 Resource setup
+Before I can setup the deployment I first needed to setup an environment and checked the status.
+```bash
+minikube start --profile=bookrent --driver=docker --cpus=1 --memory=3g --nodes 4
+
+😄  [bookrent] minikube v1.37.0 on Ubuntu 24.04
+✨  Using the docker driver based on user configuration
+...
+...
+🏄  Done! kubectl is now configured to use "bookrent" cluster and "default" namespace by default
+
+
+minikube status --profile=bookrent
+bookrent
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+bookrent-m02
+type: Worker
+host: Running
+kubelet: Running
+```
+After the minikube cluster was created I could set it up to be used by kubectl via
+```bash
+kubectl config use-context bookrent
+Switched to context "bookrent".
+kubectl config set-context --current --namespace=bookrent
+
+
+kubectl get nodes
+NAME       STATUS   ROLES           AGE     VERSION
+bookrent   Ready    control-plane   2m12s   v1.34.0
+bookrent-m02   Ready    <none>          82s    v1.34.0
+bookrent-m03   Ready    <none>          55s    v1.34.0
+bookrent-m04   Ready    <none>          28s    v1.34.0
+```
 Only the orchestrator-service is able to call the other services and be called from external sources.
 Since I already had Dockerfiles to install the images in minikube do the folowing
 ```bash
@@ -59,42 +103,7 @@ docker build -t bookrent_renting-service:latest \
 
 docker build -t bookrent_user-service:latest \
   -f Services/BookRent.User/Dockerfile .
-
 ```
-
-### 2. Setting up deployment
-#### 2.1 Resource setup
-Before I can setup the deployment I first needed to setup an environment and checked the status.
-```bash
-minikube start --profile=bookrent --driver=docker --cpus=4 --memory=12g
-
-😄  [bookrent] minikube v1.37.0 on Ubuntu 24.04
-✨  Using the docker driver based on user configuration
-...
-...
-🏄  Done! kubectl is now configured to use "bookrent" cluster and "default" namespace by default
-
-
-minikube status --profile=bookrent
-bookrent
-type: Control Plane
-host: Running
-kubelet: Running
-apiserver: Running
-kubeconfig: Configured
-```
-After the minikube cluster was created I could set it up to be used by kubectl via
-```bash
-kubectl config use-context bookrent
-Switched to context "bookrent".
-kubectl config set-context --current --namespace=bookrent
-
-
-kubectl get nodes
-NAME       STATUS   ROLES           AGE     VERSION
-bookrent   Ready    control-plane   2m12s   v1.34.0
-```
-
 #### 2.2 Setup Databases
 Before I setup the database, I made an sql-secrety.yaml file to store the password for the databases.
 In real applications this file should not be in the source control but I included it for that example.
