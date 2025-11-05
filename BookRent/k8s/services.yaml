@@ -22,7 +22,7 @@ spec:
       containers:
         - name: orchestrator-service
           image: bookrent_orchestrator-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -64,7 +64,7 @@ spec:
       containers:
         - name: catalog-service
           image: bookrent_catalog-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -103,7 +103,7 @@ spec:
       containers:
         - name: renting-service
           image: bookrent_renting-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -142,7 +142,7 @@ spec:
       containers:
         - name: user-service
           image: bookrent_user-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -181,7 +181,7 @@ spec:
       containers:
         - name: identity-service
           image: bookrent_identity_service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

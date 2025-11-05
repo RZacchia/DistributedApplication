@@ -43,14 +43,12 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 
 var app = builder.Build();
 
-app.MapOrchestratorEndpoints();
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapScalarApiReference();
-    app.MapOpenApi();
-}
 
+app.MapScalarApiReference();
+app.MapOpenApi();
+
+
+app.MapOrchestratorEndpoints();
 app.UseAuthentication();
 app.UseHttpsRedirection();
 

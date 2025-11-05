@@ -15,8 +15,6 @@ var cs = Environment.GetEnvironmentVariable("ConnectionStrings__CatalogDb")
 builder.Services.AddDbContext<CatalogDbContext>(opt =>
     opt.UseSqlServer(cs, sql => sql.EnableRetryOnFailure(5)));
 builder.Services.AddScoped<IBookRepository, BookRepository>();
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 
@@ -30,11 +28,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-if (app.Environment.IsDevelopment())
-{
+
     app.MapOpenApi();
     app.MapScalarApiReference();
-}
+
 
 app.MapCatalogEndpoints();
 
