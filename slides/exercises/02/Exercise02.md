@@ -41,9 +41,25 @@ BookRent consists of 5 Services and 4 Databases.
 | orchestrator-service | None          | True              |
 
 Only the orchestrator-service is able to call the other services and be called from external sources.
-Since I already had Dockerfiles and a docker-compose file set up for the project I could just build the images via.
+Since I already had Dockerfiles to install the images in minikube do the folowing
 ```bash
-docker-compose build --no-cache --parallel 
+eval $(minikube -p bookrent docker-env)
+
+docker build -t bookrent_catalog-service:latest \
+  -f Services/BookRent.Catalog/Dockerfile .
+
+docker build -t bookrent_orchestrator-service:latest \
+  -f BookRent.Orchestrator/Dockerfile .
+
+docker build -t bookrent_identity-service:latest \
+  -f Services/BookRent.Identity/Dockerfile .
+
+docker build -t bookrent_renting-service:latest \
+  -f Services/BookRent.Renting/Dockerfile .
+
+docker build -t bookrent_user-service:latest \
+  -f Services/BookRent.User/Dockerfile .
+
 ```
 
 ### 2. Setting up deployment
@@ -200,6 +216,42 @@ minikube addons enable ingress --profile=bookrent
 minikube ip --profile=bookrent
 kubectl get ingress -n bookrent
 ```
+## Issues
+Currenty I have still issues with running the application and sadly not enough time to fix it before the deadline.
+
+```bash
+kubectl get pods -n bookrent
+
+NAME                                    READY   STATUS             RESTARTS       AGE
+catalog-db-0                            1/1     Running            1 (7h4m ago)   7h22m
+catalog-service-7f7f75db74-gpr8k        0/1     ErrImagePull       0              12s
+catalog-service-89b458f9-j8xcf          0/1     ImagePullBackOff   0              7h22m
+identity-db-0                           1/1     Running            1 (7h4m ago)   7h22m
+identity-service-56cbbb6cfc-gps79       0/1     ImagePullBackOff   0              7h22m
+orchestrator-service-689d977cbf-jcgsr   0/1     ImagePullBackOff   0              7h22m
+renting-db-0                            1/1     Running            1 (7h4m ago)   7h22m
+renting-service-5694497899-6p7xz        0/1     ImagePullBackOff   0              7h22m
+user-db-0                               1/1     Running            1 (7h4m ago)   7h22m
+user-service-7dd646bc89-8lvhk           0/1     ImagePullBackOff   0              7h22m
 
 
-Sadly I could not fix the application, since I still have a problem with crashing during startup
+ kubectl describe pod catalog-service-7f7f75db74-gpr8k -n bookrent
+Name:             catalog-service-7f7f75db74-gpr8k
+Namespace:        bookrent
+Priority:         0
+Service Account:  default
+Node:             bookrent/192.168.49.2
+Start Time:       Wed, 05 Nov 2025 06:44:16 +0100
+Labels:           app=catalog-service
+...
+...
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  94s                default-scheduler  Successfully assigned bookrent/catalog-service-7f7f75db74-gpr8k to bookrent
+  Normal   BackOff    20s (x4 over 92s)  kubelet            Back-off pulling image "bookrent_catalog-service:latest"
+  Warning  Failed     20s (x4 over 92s)  kubelet            Error: ImagePullBackOff
+  Normal   Pulling    5s (x4 over 94s)   kubelet            Pulling image "bookrent_catalog-service:latest"
+  Warning  Failed     4s (x4 over 92s)   kubelet            Failed to pull image "bookrent_catalog-service:latest": Error response from daemon: pull access denied for bookrent_catalog-service, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+  Warning  Failed     4s (x4 over 92s)   kubelet            Error: ErrImagePull
+```
