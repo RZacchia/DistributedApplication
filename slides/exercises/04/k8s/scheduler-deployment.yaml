@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meta-scheduler
+  namespace: task04
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meta-scheduler
+  template:
+    metadata:
+      labels:
+        app: meta-scheduler
+    spec:
+      serviceAccountName: meta-scheduler-sa
+      containers:
+        - name: meta-scheduler
+          image: meta-scheduler:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SCHEDULER_NAME
+              value: "metaheuristic-scheduler"
+            - name: PYTHONUNBUFFERED
+              value: "1"
