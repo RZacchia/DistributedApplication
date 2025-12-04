@@ -1,0 +1,11 @@
+apiVersion: autoscaling/v2
+kind: VerticalPodAutoscaler
+metadata:
+  name: task05
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: task05
+  updatePolicy:
+    updateMode: Off
