@@ -144,7 +144,6 @@ def schedule_pod(core_v1: client.CoreV1Api, pod: V1Pod, scheduler_name: str):
         )
         print(f"Successfully bound pod {pod.metadata.namespace}/{pod.metadata.name} to node {node_name}")
     except Exception as e:
-        print("not again!")
         print(f"Failed to bind pod {pod.metadata.namespace}/{pod.metadata.name}: {e}")
 
 
