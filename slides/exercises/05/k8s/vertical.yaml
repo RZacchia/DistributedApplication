@@ -1,4 +1,4 @@
-apiVersion: autoscaling/v2
+apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: task05
@@ -9,4 +9,4 @@ spec:
     kind: Deployment
     name: task05
   updatePolicy:
-    updateMode: Off
+    updateMode: InPlaceOrRecreate
