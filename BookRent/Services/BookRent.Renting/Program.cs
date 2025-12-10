@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BookRent.Renting.Api;
 using BookRent.Renting.Infrastructure;
 using BookRent.Renting.Infrastructure.Interfaces;
@@ -17,7 +18,9 @@ builder.Services.AddDbContext<RentingDbContext>(opt =>
 });
 builder.Services.AddScoped<IRentingRepository, RentingRepository>();
 
-
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
+);
 var app = builder.Build();
 
 

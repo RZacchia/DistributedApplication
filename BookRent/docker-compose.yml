@@ -6,18 +6,13 @@ x-mssql-env: &mssql-env
   SA_PASSWORD: "Your_SA_Password_123!"
   
 x-mssql-healthcheck: &mssql-healthcheck
-  test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Your_SA_Password_123!", "-Q", "SELECT 1"]
+  test: ["CMD", "</dev/tcp/localhost/1433"]
   interval: 5s
   timeout: 3s
   retries: 20
   start_period: 20s
   
-x-mssql-resources: &mssql-resources
-  limits:
-    memory: 3g
-    cpus: 1
-  reservations:
-    memory: 2.0g
+
 
 networks:
   public-net: {}           # shared app-to-app network (HTTP)
@@ -48,9 +43,6 @@ services:
   catalog-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: catalog-db
-    deploy:
-      resources:
-        *mssql-resources
     environment:
       <<: *mssql-env
     ports:

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BookRent.Orchestrator.Api;
 using BookRent.Orchestrator.Clients;
 using BookRent.Orchestrator.Services;
@@ -38,8 +39,11 @@ builder.Services.AddHttpClient<UserClient>(client =>
                  ?? cfg["Services:UserServiceUrl"]!;
     client.BaseAddress = new Uri(uri);
 });
-
+builder.Services.AddControllers().AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
+    );
 builder.Services.AddScoped<ICatalogService, CatalogService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var app = builder.Build();
 

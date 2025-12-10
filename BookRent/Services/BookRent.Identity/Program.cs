@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BookRent.Identity.Api;
 using BookRent.Identity.Infrastructure;
 using BookRent.Identity.Infrastructure.Interfaces;
@@ -16,7 +17,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 
-
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
+);
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

@@ -24,3 +24,8 @@ ports for services:
 - user
   - api: 8084
   - db: 1436
+
+To only start databases use
+```bash
+docker compose up -d $(docker compose config --services | grep "db")
+```

@@ -4,7 +4,6 @@ using BookRent.Identity.Infrastructure.Interfaces;
 using BookRent.Identity.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using LoginRequest = Microsoft.AspNetCore.Identity.Data.LoginRequest;
 
 namespace BookRent.Identity.Api;
 
@@ -12,14 +11,14 @@ internal static class IdentityEndpoints
 {
     internal static async Task<Results<Ok<string>, BadRequest>> Login([FromBody] LoginRequest request, IIdentityRepository repo)
     {
-        var id = await repo.GetUserIdAsync(request.Email, request.Password);
+        var id = await repo.GetUserIdAsync(request.UserName, request.Password);
         if (id == null) return TypedResults.BadRequest();
         return TypedResults.Ok(id.ToString());
     }
     
     internal static async Task<Results<Ok<string>, BadRequest>> Logout([FromBody] LoginRequest request, IIdentityRepository repo)
     {
-        var id = await repo.GetUserIdAsync(request.Email, request.Password);
+        var id = await repo.GetUserIdAsync(request.UserName, request.Password);
         if (id == null) return TypedResults.BadRequest();
         return TypedResults.Ok(id.ToString());
     }

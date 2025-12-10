@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BookRent.Catalog.Api;
 using BookRent.Catalog.Infrastructure;
 using BookRent.Catalog.Infrastructure.Interfaces;
@@ -17,7 +18,9 @@ builder.Services.AddDbContext<CatalogDbContext>(opt =>
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddOpenApi();
 
-
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
+);
 var app = builder.Build();
 
 
