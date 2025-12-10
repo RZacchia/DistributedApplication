@@ -41,7 +41,7 @@ def flaky_load(n: int):
 
         else:
             # Sleep for a random duration (low CPU)
-            duration = random.randint(8, 12)  # seconds
+            duration = random.randint(1, 5)  # seconds
             time.sleep(duration)
             trace.append({
                 "phase": i,

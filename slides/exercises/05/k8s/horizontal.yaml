@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: task05
+  namespace: task05
 spec:
   minReplicas: 1
   maxReplicas: 5

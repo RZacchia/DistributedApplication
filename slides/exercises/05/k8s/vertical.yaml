@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: VerticalPodAutoscaler
 metadata:
   name: task05
+  namespace: task05
 spec:
   targetRef:
     apiVersion: apps/v1
