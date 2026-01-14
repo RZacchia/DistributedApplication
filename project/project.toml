@@ -1,0 +1,46 @@
+[project]
+name = "AdaSplit-FedLFP"
+version = "0.0.0"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [{ name = "Robert Zacchia" }]
+
+dependencies = [
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "numpy",
+  "tqdm",
+  "matplotlib",
+  "jsonschema>=4.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+ada_split_fedlfp = "wfm.adaspit.run:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=4.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 90
+
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
