@@ -2,16 +2,16 @@ import argparse
 import numpy as np
 import torch
 
-from configs import Config
-from data import set_seed, load_cifar10, dirichlet_partition, make_loaders
-from models import SplitCNN
-from splitfed import SplitFedSimulator
-from proto import PrototypeBank
+from .configs import Config
+from .data import set_seed, load_cifar10, dirichlet_partition, make_loaders
+from .models import SplitCNN
+from .splitfed import SplitFedSimulator
+from .proto import PrototypeBank
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", type=str, default="adaptive", choices=["fixed", "adaptive"])
-    ap.add_argument("--rounds", type=int, default=5)
+    ap.add_argument("--rounds", type=int, default=20)
     ap.add_argument("--no-proto", action="store_true")
     args = ap.parse_args()
 

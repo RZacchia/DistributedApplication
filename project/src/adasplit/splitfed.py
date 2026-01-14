@@ -3,8 +3,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-from metrics import AvgMeter, accuracy, Timer
-from models import ClientNet, ServerNet
+
+from .metrics import AvgMeter, accuracy, Timer
+from .models import ClientNet, ServerNet
 
 def estimate_activation_mb(cut: int, batch_size: int):
     """

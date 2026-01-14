@@ -1,5 +1,5 @@
 [project]
-name = "AdaSplit-FedLFP"
+name = "adasplit"
 version = "0.0.0"
 requires-python = ">=3.12"
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
 where = ["src"]
 
 [project.scripts]
-ada_split_fedlfp = "wfm.adaspit.run:main"
+adasplit = "adasplit.run:main"
 
 [project.optional-dependencies]
 dev = [
@@ -29,6 +29,7 @@ dev = [
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra"
+pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.coverage.run]
@@ -40,7 +41,3 @@ show_missing = true
 skip_empty = true
 fail_under = 90
 
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
