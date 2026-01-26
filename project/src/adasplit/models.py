@@ -1,99 +1,54 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch
 
-class SplitCNN(nn.Module):
+# ------------------------------
+# Paper model: LeNet-5 split (feature extractor + client head)
+# Model split: f(θ) and h(Φ)
+# ------------------------------
+
+
+
+class LeNet5FeatureExtractor(nn.Module):
     """
-    A small CNN broken into "blocks". Cut points refer to block index.
-    blocks[0..cut-1] live on client, blocks[cut..] on server.
+    LeNet-5 feature extractor f(θ_i;·) used in the paper (Section V-B-2 "Model and Training").
+    Paper detail: "Each client utilizes the LeNet-5 architecture, where the first four layers
+    are shared with the server for feature extraction, and the final fully connected (FC) layer
+    acts as the client-specific decision layer." 
+
+    We implement the standard LeNet-5 up to the 84-dim feature vector:
+      conv1 -> pool -> conv2 -> pool -> fc1(120) -> fc2(84)
+    The client-specific classifier head is a separate Linear(84, num_classes).
     """
-    def __init__(self, num_classes=10, emb_dim=128, proto_cond_head=True):
+    def __init__(self, in_channels: int = 3):
         super().__init__()
-        self.blocks = nn.ModuleList([
-            nn.Sequential(  # block 0
-                nn.Conv2d(3, 64, 3, padding=1),
-                nn.BatchNorm2d(64),
-                nn.ReLU(inplace=True),
-                nn.MaxPool2d(2),
-            ),
-            nn.Sequential(  # block 1
-                nn.Conv2d(64, 128, 3, padding=1),
-                nn.BatchNorm2d(128),
-                nn.ReLU(inplace=True),
-                nn.MaxPool2d(2),
-            ),
-            nn.Sequential(  # block 2
-                nn.Conv2d(128, 256, 3, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(inplace=True),
-                nn.AdaptiveAvgPool2d((1, 1)),
-            ),
-        ])
+        self.conv1 = nn.Conv2d(in_channels, 6, kernel_size=5)   # layer 1
+        self.pool1 = nn.AvgPool2d(kernel_size=2, stride=2)      # layer 2
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)            # layer 3
+        self.pool2 = nn.AvgPool2d(kernel_size=2, stride=2)      # layer 4
 
-        self.to_emb = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(256, emb_dim),
-            nn.ReLU(inplace=True),
-        )
+        # For 32x32 CIFAR: output after pool2 is (16, 5, 5) => 400 features
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)  # paper: FC layer input dimension = 84 for CIFAR-10 
 
-        self.proto_cond_head = proto_cond_head
-        if proto_cond_head:
-            # FiLM-style conditioning using a "proto context" vector
-            self.film = nn.Linear(emb_dim, emb_dim * 2)  # gamma,beta
-        self.classifier = nn.Linear(emb_dim, num_classes)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = torch.tanh(self.conv1(x))
+        x = self.pool1(x)
+        x = torch.tanh(self.conv2(x))
+        x = self.pool2(x)
+        x = torch.flatten(x, 1)
+        x = torch.tanh(self.fc1(x))
+        x = torch.tanh(self.fc2(x))
+        return x  # 84-dim representation
 
-    def forward_from_cut(self, z, proto_ctx=None):
-        """
-        Server-side forward starting at representation z produced by client blocks.
-        z shape depends on cut.
-        """
-        x = z
-        # If z is an activation map, run remaining conv blocks + head
-        if x.dim() == 4:
-            # determine which conv block we are at by channel count
-            # We'll just run "rest of blocks" outside; splitfed passes correct remainder.
-            raise RuntimeError("Use ServerNet wrapper for remaining blocks.")
 
-        # If z already embedding, just head
-        emb = x
-        if self.proto_cond_head and proto_ctx is not None:
-            gb = self.film(proto_ctx)
-            gamma, beta = gb.chunk(2, dim=-1)
-            emb = emb * (1 + torch.tanh(gamma)) + beta
-        logits = self.classifier(emb)
-        return logits, emb
-
-class ClientNet(nn.Module):
-    def __init__(self, full: SplitCNN, cut: int):
+class LeNet5ClientHead(nn.Module):
+    """
+    Client-specific decision layer h(Φ_i;·): Linear(84, C).
+    default value = 10 since I will only train on CIFAR10
+    """
+    def __init__(self, num_classes: int = 10):
         super().__init__()
-        self.cut = cut
-        self.blocks = nn.Sequential(*list(full.blocks[:cut]))
+        self.fc = nn.Linear(84, num_classes)
 
-    def forward(self, x):
-        return self.blocks(x)
-
-class ServerNet(nn.Module):
-    def __init__(self, full: SplitCNN, cut: int):
-        super().__init__()
-        self.cut = cut
-        self.blocks = nn.Sequential(*list(full.blocks[cut:]))
-        self.to_emb = full.to_emb
-        self.proto_cond_head = full.proto_cond_head
-        self.film = full.film if full.proto_cond_head else None
-        self.classifier = full.classifier
-
-    def forward(self, z, proto_ctx=None):
-        x = z
-        if x.dim() == 4:
-            x = self.blocks(x)
-            emb = self.to_emb(x)
-        else:
-            emb = x
-
-        if self.proto_cond_head and proto_ctx is not None:
-            gb = self.film(proto_ctx)
-            gamma, beta = gb.chunk(2, dim=-1)
-            emb = emb * (1 + torch.tanh(gamma)) + beta
-
-        logits = self.classifier(emb)
-        return logits, emb
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        return self.fc(z)
