@@ -3,9 +3,16 @@
 # ------------------------------
 
 import random
-from typing import List, Sequence
 
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Tuple, Union, List, Sequence
+
+import numpy as np
 import torch
+from torch.utils.data import Dataset
+
+
 
 
 def dirichlet_partition(
@@ -78,3 +85,124 @@ def dirichlet_partition(
         rnd.shuffle(client_indices[i])
 
     return client_indices
+
+
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Tuple, Union
+
+import numpy as np
+import torch
+from torch.utils.data import Dataset
+
+
+@dataclass
+class KronoDroidStats:
+    mean: np.ndarray  # (F,)
+    std: np.ndarray   # (F,)
+
+
+class KronoDroidNPZ(Dataset):
+    """
+    Loads kronodroid_{train,test}.npz created by your preprocessing script.
+
+    NPZ format:
+      - X: (N, F) float32 features
+      - y: (N,) int64 labels in [0..12] (13 classes total)
+
+    IMPORTANT:
+      Your current LeNet-5 expects 32x32 inputs (so conv/pool -> 16*5*5).
+      Therefore we pad features to 32*32=1024 and reshape to (C,32,32).
+
+      Output per sample:
+        x: (3, 32, 32) float32
+        y: scalar long
+    """
+
+    def __init__(
+        self,
+        npz_path: Union[str, Path],
+        stats: Optional[KronoDroidStats] = None,
+        compute_stats: bool = False,
+        in_channels: int = 3,
+        image_side: int = 32,
+    ):
+        npz_path = Path(npz_path)
+        if not npz_path.exists():
+            raise FileNotFoundError(f"KronoDroid NPZ not found: {npz_path}")
+
+        obj = np.load(npz_path, allow_pickle=False)
+        if "X" not in obj or "y" not in obj:
+            raise ValueError(f"{npz_path} must contain keys 'X' and 'y'.")
+
+        X = obj["X"].astype(np.float32)
+        y = obj["y"].astype(np.int64)
+
+        if X.ndim != 2:
+            raise ValueError(f"X must be 2D (N,F). Got {X.shape}")
+        if y.ndim != 1 or y.shape[0] != X.shape[0]:
+            raise ValueError(f"y must be 1D with same N as X. Got X={X.shape}, y={y.shape}")
+
+        # compute stats on train split
+        if compute_stats:
+            mean = X.mean(axis=0)
+            std = X.std(axis=0)
+            std = np.where(std < 1e-12, 1.0, std).astype(np.float32)
+            stats = KronoDroidStats(mean=mean.astype(np.float32), std=std)
+
+        if stats is None:
+            raise ValueError("Provide stats=... or set compute_stats=True for training split.")
+
+        # normalize
+        X = (X - stats.mean) / stats.std
+
+        # pad to image_side * image_side
+        target = image_side * image_side
+        F = X.shape[1]
+        if F > target:
+            raise ValueError(f"Feature dim F={F} exceeds {image_side}*{image_side}={target}.")
+        if F < target:
+            X = np.pad(X, ((0, 0), (0, target - F)), mode="constant", constant_values=0.0)
+
+        # reshape to 1x32x32 then repeat to 3 channels for LeNet
+        X = X.reshape(-1, 1, image_side, image_side)  # (N,1,32,32)
+        if in_channels == 3:
+            X = np.repeat(X, 3, axis=1)               # (N,3,32,32)
+        elif in_channels != 1:
+            raise ValueError("in_channels must be 1 or 3")
+
+        self.X = X
+        self.y = y
+        self.stats = stats
+
+    def __len__(self) -> int:
+        return int(self.y.shape[0])
+
+    def __getitem__(self, idx: int):
+        x = torch.from_numpy(self.X[idx])
+        y = torch.tensor(int(self.y[idx]), dtype=torch.long)
+        return x, y
+
+
+def load_kronodroid_npz(
+    data_dir: Union[str, Path],
+    train_name: str = "kronodroid_train.npz",
+    test_name: str = "kronodroid_test.npz",
+    in_channels: int = 3,
+    image_side: int = 32,
+) -> Tuple[KronoDroidNPZ, KronoDroidNPZ]:
+    """
+    Loads NPZ train/test with shared normalization stats (train mean/std).
+    """
+    data_dir = Path(data_dir)
+    train_path = data_dir / train_name
+    test_path = data_dir / test_name
+
+    train_ds = KronoDroidNPZ(
+        train_path, compute_stats=True, in_channels=in_channels, image_side=image_side
+    )
+    test_ds = KronoDroidNPZ(
+        test_path, stats=train_ds.stats, in_channels=in_channels, image_side=image_side
+    )
+    return train_ds, test_ds

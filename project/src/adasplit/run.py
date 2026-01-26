@@ -3,12 +3,88 @@ from typing import List, Tuple
 
 from adasplit.client import FedLFPClient
 from adasplit.configs import FedLFPConfig
-from adasplit.data import dirichlet_partition
+from adasplit.data import dirichlet_partition, load_kronodroid_npz
 from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor
 from adasplit.operations import set_seed
 from adasplit.orchestrator import FedLFPTrainer
 from adasplit.server import FedLFPServer
 import torch
+
+
+def build_krono_droid_fedlfp(
+    data_dir: str,
+    num_clients: int = 20,
+    alpha: float = 0.1,
+    batch_size: int = 64,
+    seed: int = 0,
+    device: str = "cuda",
+) -> Tuple[List[FedLFPClient], FedLFPServer, FedLFPConfig, List[torch.utils.data.DataLoader]]:
+    """
+    Build FedLFP on KronoDroid NPZs:
+      expects:
+        {data_dir}/kronodroid_train.npz
+        {data_dir}/kronodroid_test.npz
+      with keys X (N,F) and y (N,) in 13 classes.
+
+    Returns per-client test loaders for fair evaluation under Dirichlet non-IID.
+    """
+
+    set_seed(seed)
+
+    # Load NPZ datasets (already labeled into 13 classes)
+    train_set, test_set = load_kronodroid_npz(data_dir, in_channels=3, image_side=32)
+
+    # Dirichlet partitions on TRAIN and TEST labels
+    train_splits = dirichlet_partition(
+        targets=train_set.y.tolist(),
+        num_clients=num_clients,
+        alpha=alpha,
+        seed=seed,
+    )
+    test_splits = dirichlet_partition(
+        targets=test_set.y.tolist(),
+        num_clients=num_clients,
+        alpha=alpha,
+        seed=seed,
+    )
+
+    cfg = FedLFPConfig(
+        T=50,
+        E=2,
+        gamma=0.01,
+        K=13,            # 13 classes: benign + 12 malware families
+        lambda_cl=0.1,
+        tau=0.2,
+        rho=0.1,
+        dissim_mode="euclidean",
+        device=device,
+        momentum=0.9,
+    )
+
+    clients: List[FedLFPClient] = []
+    for i in range(num_clients):
+        subset = torch.utils.data.Subset(train_set, train_splits[i])
+        dl = torch.utils.data.DataLoader(
+            subset, batch_size=batch_size, shuffle=True, drop_last=False
+        )
+
+        f = LeNet5FeatureExtractor(in_channels=3)
+        h = LeNet5ClientHead(num_classes=13)
+
+        clients.append(FedLFPClient(i, f, h, dl, num_classes=13, cfg=cfg))
+
+    server = FedLFPServer(cfg)
+
+    test_loaders: List[torch.utils.data.DataLoader] = []
+    for i in range(num_clients):
+        subset = torch.utils.data.Subset(test_set, test_splits[i])
+        test_loaders.append(
+            torch.utils.data.DataLoader(subset, batch_size=256, shuffle=False)
+        )
+
+    return clients, server, cfg, test_loaders
+
+
 
 
 def build_cifar10_fedlfp(
@@ -17,7 +93,7 @@ def build_cifar10_fedlfp(
     alpha: float = 0.1,  # paper uses α=0.1 for CIFAR-10 setting (Section V-C-2) fileciteturn1file4
     batch_size: int = 64,
     seed: int = 0,
-    device: str = "cpu",
+    device: str = "cuda",
 ) -> Tuple[List[FedLFPClient], FedLFPServer, FedLFPConfig, torch.utils.data.DataLoader]:
     """
     Build a FedLFP setup on CIFAR-10 following the paper's defaults:
@@ -57,7 +133,7 @@ def build_cifar10_fedlfp(
     client_splits = dirichlet_partition(train_set.targets, num_clients=num_clients, alpha=alpha, seed=seed)
 
     cfg = FedLFPConfig(
-        T=50,            # paper default fileciteturn1file0turn1file3
+        T=100,            # paper default fileciteturn1file0turn1file3
         E=2,             # paper default fileciteturn1file0turn1file3
         gamma=0.01,      # paper default fileciteturn1file0turn1file3
         K=10,            # CIFAR-10 classes fileciteturn1file3
@@ -111,13 +187,13 @@ def evaluate_accuracy(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--demo", action="store_true", help="Run a small synthetic demo (2D blobs).")
     parser.add_argument("--cifar10", action="store_true", help="Run FedLFP on CIFAR-10 using the paper's LeNet-5 split model.")
+    parser.add_argument("--krono", action="store_true", help="Run FedLFP on KRONODROID using the paper's LeNet-5 split model.")
     parser.add_argument("--data_dir", type=str, default="./data", help="Where to download/store datasets (for --cifar10).")
     parser.add_argument("--num_clients", type=int, default=20, help="Number of clients M (paper commonly uses 20 for image tasks).")
     parser.add_argument("--alpha", type=float, default=0.1, help="Dirichlet concentration parameter α for Non-IID partition (CIFAR-10 default 0.1 in paper).")
-    parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
-    parser.add_argument("--eval_every", type=int, default=10, help="Evaluate every N rounds (for --cifar10).")
+    parser.add_argument("--device", type=str, default="cuda", help="cpu or cuda")
+    parser.add_argument("--eval_every", type=int, default=1, help="Evaluate every N rounds (for --cifar10).")
     args = parser.parse_args()
 
 
@@ -135,16 +211,45 @@ def main():
             At = trainer.sample_clients()
             GP = server.GP
             for c in At:
-                print(f"client update")
                 c.client_update(GP=GP)
             payloads = [(c.LPi, c.Qi, c.Si) for c in At]
             server.aggregate(payloads)
             server.compute_GP()
 
             if (t % args.eval_every == 0) or (t == 1) or (t == cfg.T):
-                acc = evaluate_accuracy(clients[0], test_loader)
-                print(f"[Round {t:03d}] clients={len(At)} GP={'set' if server.GP is not None else 'None'} | client0 test acc={acc*100:.2f}%")
+                for client in At:
+                    acc = evaluate_accuracy(client, test_loader)
+                    print(f"[Round {t:03d}] clients={len(At)} GP={'set' if server.GP is not None else 'None'} | client test acc={acc*100:.2f}%")
         return
+    elif args.krono:
+        clients, server, cfg, test_loaders = build_krono_droid_fedlfp(
+        data_dir=args.data_dir,
+        num_clients=args.num_clients,
+        alpha=args.alpha,
+        device=args.device,
+        )
+        trainer = FedLFPTrainer(clients, server, cfg)
+
+        for t in range(1, cfg.T + 1):
+            At = trainer.sample_clients()
+            GP = server.GP
+            for c in At:
+                c.client_update(GP=GP)
+            payloads = [(c.LPi, c.Qi, c.Si) for c in At]
+            server.aggregate(payloads)
+            server.compute_GP()
+
+            if (t % args.eval_every == 0) or (t == 1) or (t == cfg.T):
+                # evaluate participating clients on THEIR OWN test splits
+                for client in At:
+                    acc = evaluate_accuracy(client, test_loaders[client.client_id])
+                    print(
+                        f"[Round {t:03d}] clients={len(At)} "
+                        f"GP={'set' if server.GP is not None else 'None'} | "
+                        f"client{client.client_id} test acc={acc*100:.2f}%"
+                    )
+
+
 
     print("This is a library-style reference implementation. Use --demo or --cifar10.")
 

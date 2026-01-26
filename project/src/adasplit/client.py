@@ -151,22 +151,25 @@ def compute_LP_Q_S(
     counts: Dict[int, int] = {}
 
     with torch.no_grad():
+        sums = {}
+        counts = {}
+
         for x, y in dataloader:
-            x = x.to(device)
-            y = y.to(device)
-            z = f_theta(x)  # representations (Section III-C-1)
+            x, y = x.to(device), y.to(device)
+            z = f_theta(x)
+
             for cls in y.unique().tolist():
                 mask = (y == cls)
-                zc = z[mask].mean(dim=0)
+                z_sum = z[mask].sum(dim=0)
+
                 if cls not in sums:
-                    sums[cls] = zc.detach().clone()
+                    sums[cls] = z_sum.detach().clone()
                     counts[cls] = int(mask.sum().item())
                 else:
-                    # weighted sum: keep sum, not mean, for stable aggregation
-                    sums[cls] += z[mask].sum(dim=0)
+                    sums[cls] += z_sum
                     counts[cls] += int(mask.sum().item())
 
-    classes = sorted(sums.keys())
+            classes = sorted(sums.keys())
     if len(classes) == 0:
         # No data
         return (torch.empty(0, 1, device=device),
@@ -174,15 +177,15 @@ def compute_LP_Q_S(
                 torch.empty(0, device=device))
 
     # Eq. (2) prototypes (mean then normalize)
-    LP_list = []
-    Q_list = []
-    for cls in classes:
-        mean_vec = sums[cls] / max(counts[cls], 1)
-        LP_list.append(normalize(mean_vec))
-        Q_list.append(counts[cls])
+    LP, Q = [], []
+    for cls in sums:
+        proto = sums[cls] / counts[cls]
+        proto = F.normalize(proto, dim=0)
+        LP.append(proto)
+        Q.append(counts[cls])
 
-    LPi = torch.stack(LP_list, dim=0)                  # (Ci, d)
-    Qi = torch.tensor(Q_list, device=device).float()   # (Ci,)
+    LPi = torch.stack(LP, dim=0)                  # (Ci, d)
+    Qi = torch.tensor(Q, device=device).float()   # (Ci,)
 
     # Eq. (3): confidence score from classifier on prototype; use max softmax prob
     logits = h_phi(LPi)                                # (Ci, C_global)
