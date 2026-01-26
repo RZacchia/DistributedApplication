@@ -1,1 +1,0 @@
-namespace BookRent.Identity.DTOs;

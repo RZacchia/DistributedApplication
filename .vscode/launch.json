@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug adasplit (module)",
+      "type": "python",
+      "request": "launch",
+      "module": "adasplit.run",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/project/src"
+      }
+    }
+  ]
+}

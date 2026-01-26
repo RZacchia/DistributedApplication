@@ -12,8 +12,6 @@ def set_seed(seed: int):
 
 def load_cifar10(data_dir="./data"):
     tfm_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
     ])
     tfm_test = transforms.Compose([

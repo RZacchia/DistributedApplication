@@ -1,12 +1,15 @@
 import argparse
 import numpy as np
 import torch
+import logging
 
 from .configs import Config
 from .data import set_seed, load_cifar10, dirichlet_partition, make_loaders
 from .models import SplitCNN
 from .splitfed import SplitFedSimulator
 from .proto import PrototypeBank
+
+logger = logging.getLogger()
 
 def main():
     ap = argparse.ArgumentParser()

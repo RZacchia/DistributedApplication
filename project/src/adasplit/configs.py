@@ -6,7 +6,7 @@ class Config:
     device: str = "cuda"  # "cpu" also works
 
     # Data / FL
-    num_clients: int = 10
+    num_clients: int = 20
     clients_per_round: int = 5
     rounds: int = 30
     local_epochs: int = 1
