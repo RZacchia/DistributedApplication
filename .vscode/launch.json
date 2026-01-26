@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "Debug adasplit (module)",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "adasplit.run",
       "cwd": "${workspaceFolder}",

@@ -126,7 +126,7 @@ class KronoDroidNPZ(Dataset):
         stats: Optional[KronoDroidStats] = None,
         compute_stats: bool = False,
         in_channels: int = 3,
-        image_side: int = 32,
+        image_side: int = 18,
     ):
         npz_path = Path(npz_path)
         if not npz_path.exists():
@@ -190,7 +190,7 @@ def load_kronodroid_npz(
     train_name: str = "kronodroid_train.npz",
     test_name: str = "kronodroid_test.npz",
     in_channels: int = 3,
-    image_side: int = 32,
+    image_side: int = 18,
 ) -> Tuple[KronoDroidNPZ, KronoDroidNPZ]:
     """
     Loads NPZ train/test with shared normalization stats (train mean/std).
