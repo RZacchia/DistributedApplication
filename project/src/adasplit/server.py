@@ -97,6 +97,7 @@ class FedLFPServer:
         self.LW: Optional[torch.Tensor] = None
         self.GP: Optional[torch.Tensor] = None
 
+
     def aggregate(self, client_payloads: List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]) -> None:
         """
         Aggregate label-free local prototype data from participating clients At:

@@ -8,6 +8,7 @@ from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor, init_head_
 from adasplit.operations import set_seed
 from adasplit.orchestrator import FedLFPTrainer
 from adasplit.server import FedLFPServer
+import sys
 import torch
 import numpy as np
 
@@ -120,11 +121,11 @@ def build_krono_droid_fedlfp(
     )
 
     cfg = FedLFPConfig(
-        T=10,
+        T=20,
         E=2,
-        gamma=0.1,
+        gamma=0.01,
         momentum=0.9,
-        K=13,              # benign + 12 families
+        K=10,              # benign + 12 families
         lambda_cl=0.1,
         tau=0.2,
         rho=0.1,
@@ -144,11 +145,11 @@ def build_krono_droid_fedlfp(
         )
 
         f = LeNet5FeatureExtractor(in_channels=3, input_size=image_side)
-        h = LeNet5ClientHead(num_classes=13)
+        h = LeNet5ClientHead(num_classes=cfg.K)
 
         f.apply(init_lenet_tanh)
         h.apply(init_head_small)
-        clients.append(FedLFPClient(i, f, h, train_loader, num_classes=13, cfg=cfg))
+        clients.append(FedLFPClient(i, f, h, train_loader, num_classes=cfg.K, cfg=cfg))
 
     server = FedLFPServer(cfg)
     test_loader = torch.utils.data.DataLoader(
@@ -168,13 +169,17 @@ def build_krono_droid_fedlfp(
         f"baseline acc = {maj_acc*100:.2f}% (N={counts.sum()})")
     print("[Baseline] Test class counts:", counts.tolist())
 
-    counts = np.bincount(np.array(train_set.y), minlength=13)
-    weights = (counts.sum() / np.maximum(counts, 1)).astype(np.float32)
-    weights = weights / weights.mean()
-    
+
+    counts = np.bincount(np.array(train_set.y))
+    present = counts > 0
+    weights = np.zeros_like(counts, dtype=np.float32)
+    weights[present] = counts[present].sum() / counts[present].astype(np.float32)
+    weights[present] /= weights[present].mean()  # normalize only over present classes
+
     cfg.class_weights = torch.tensor(weights, dtype=torch.float32, device=device)
     print("Train class counts:", counts.tolist())
     print("Class weights:", weights.tolist())
+    
 
     return clients, server, cfg, test_loader
 
@@ -265,12 +270,24 @@ def build_cifar10_fedlfp(
     return clients, server, cfg, test_loader
 
 
-def run_one_experiment(
+def quantize_int8(x: torch.Tensor):
+    x = x.detach()
+    maxv = x.abs().max()
+    scale = (maxv / 127.0) if maxv > 0 else x.new_tensor(1.0)
+    q = torch.clamp((x / scale).round(), -127, 127).to(torch.int8)
+    return q, scale
+
+def dequantize_int8(q: torch.Tensor, scale: torch.Tensor):
+    return q.to(torch.float32) * scale
+
+
+def fit(
     clients: List[FedLFPClient],
     server: FedLFPServer,
     cfg: FedLFPConfig,
     test_loader: torch.utils.data.DataLoader,
     eval_every: int,
+    quantize: bool = True
 ) -> float:
     """
     Runs one training experiment and returns:
@@ -282,13 +299,37 @@ def run_one_experiment(
     for t in range(1, cfg.T + 1):
         At = trainer.sample_clients()
 
+
         # client update with current global prototypes
         GP = server.GP
-        for c in At:
+        if quantize and t > 1:
+            GPq, GPs = quantize_int8(server.GP)
+            GPd = dequantize_int8(q=GPq, scale=GPs)
+            rel_err = (GP - GPd).norm() / (GP.norm() + 1e-12)
+            print("GP rel quant error:", rel_err.item())
+            GP = GPd
+
+        print(f"Server Broadcasts GP ({sys.getsizeof(GP)} Bytes) to {len(clients)} clients.")
+
+        payloads = []  
+        for c in At:      
             c.client_update(GP=GP)
+            if quantize:
+                lpq, lps = quantize_int8(c.LPi)
+                lpd = dequantize_int8(q=lpq, scale=lps)
+                rel_err = (c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12)
+                payloads.append((lpd, c.Qi, c.Si))
+            else:
+                payloads.append((c.LPi, c.Qi, c.Si))
 
         # aggregate + compute GP for next round
-        _server_aggregate_compat(server, At)
+        
+        
+
+        print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads)} Bytes) to server.")
+
+
+        server.aggregate(payloads)
         server.compute_GP()
 
         if (t % eval_every == 0) or (t == 1) or (t == cfg.T):
@@ -350,7 +391,7 @@ def main():
 
         print("Train X shape:", np.load("./data/kronodroid_npz/kronodroid_train.npz")["X"].shape)
 
-        best_acc = run_one_experiment(
+        best_acc = fit(
             clients=clients,
             server=server,
             cfg=cfg,
