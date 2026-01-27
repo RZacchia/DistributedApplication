@@ -1,5 +1,5 @@
-from adasplit.configs import FedLFPConfig
-from adasplit.operations import normalize
+from fedLFP.configs import FedLFPConfig
+from fedLFP.operations import normalize
 import torch
 from typing import Optional, List, Tuple
 

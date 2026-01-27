@@ -1,13 +1,13 @@
 import argparse
 from typing import List, Tuple
 
-from adasplit.client import FedLFPClient
-from adasplit.configs import FedLFPConfig
-from adasplit.data import dirichlet_partition, load_kronodroid_npz
-from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor, init_head_small, init_lenet_tanh
-from adasplit.operations import set_seed
-from adasplit.orchestrator import FedLFPTrainer
-from adasplit.server import FedLFPServer
+from fedLFP.client import FedLFPClient
+from fedLFP.configs import FedLFPConfig
+from fedLFP.data import dirichlet_partition, load_kronodroid_npz
+from fedLFP.models import LeNet5ClientHead, LeNet5FeatureExtractor, init_head_small, init_lenet_tanh
+from fedLFP.operations import set_seed
+from fedLFP.orchestrator import FedLFPTrainer
+from fedLFP.server import FedLFPServer
 import sys
 import torch
 import numpy as np

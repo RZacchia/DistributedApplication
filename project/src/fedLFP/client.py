@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, Optional, Tuple
 
-from adasplit.configs import FedLFPConfig
-from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor
-from adasplit.operations import normalize
+from fedLFP.configs import FedLFPConfig
+from fedLFP.models import LeNet5ClientHead, LeNet5FeatureExtractor
+from fedLFP.operations import normalize
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

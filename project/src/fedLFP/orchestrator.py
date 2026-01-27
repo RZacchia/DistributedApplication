@@ -5,9 +5,9 @@
 import random
 from typing import List
 
-from adasplit.client import FedLFPClient
-from adasplit.configs import FedLFPConfig
-from adasplit.server import FedLFPServer
+from fedLFP.client import FedLFPClient
+from fedLFP.configs import FedLFPConfig
+from fedLFP.server import FedLFPServer
 
 
 
