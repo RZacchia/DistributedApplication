@@ -287,7 +287,7 @@ def fit(
     cfg: FedLFPConfig,
     test_loader: torch.utils.data.DataLoader,
     eval_every: int,
-    quantize: bool = True
+    quantize: bool = False
 ) -> float:
     """
     Runs one training experiment and returns:
@@ -308,10 +308,13 @@ def fit(
             rel_err = (GP - GPd).norm() / (GP.norm() + 1e-12)
             print("GP rel quant error:", rel_err.item())
             GP = GPd
+            print(f"Server Broadcasts GP ({sys.getsizeof((GPq, GPs))} Bytes) to {len(clients)} clients.")
 
-        print(f"Server Broadcasts GP ({sys.getsizeof(GP)} Bytes) to {len(clients)} clients.")
+        else:
+            print(f"Server Broadcasts GP ({sys.getsizeof(GP)} Bytes) to {len(clients)} clients.")
 
-        payloads = []  
+        payloads = []
+        payloads_q = []  
         for c in At:      
             c.client_update(GP=GP)
             if quantize:
@@ -319,15 +322,16 @@ def fit(
                 lpd = dequantize_int8(q=lpq, scale=lps)
                 rel_err = (c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12)
                 payloads.append((lpd, c.Qi, c.Si))
+                payloads_q.append((lpd, c.Qi, c.Si))
             else:
                 payloads.append((c.LPi, c.Qi, c.Si))
+                
 
-        # aggregate + compute GP for next round
-        
-        
-
-        print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads)} Bytes) to server.")
-
+        if quantize:
+            print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads_q)} Bytes) to server.")
+        else:
+            print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads)} Bytes) to server.")
+            
 
         server.aggregate(payloads)
         server.compute_GP()
