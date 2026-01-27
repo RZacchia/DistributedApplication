@@ -37,6 +37,14 @@ class FedLFPClient:
         self.cfg = cfg
         self.device = torch.device(cfg.device)
 
+        # Ensure class weights live on the same device as the model
+        if getattr(self.cfg, "class_weights", None) is not None:
+            self.cfg.class_weights = self.cfg.class_weights.to(self.device)
+
+        # Create CE criterion once (instead of recreating each batch)
+        self.ce = nn.CrossEntropyLoss(weight=getattr(self.cfg, "class_weights", None))
+
+
         self.f.to(self.device)
         self.h.to(self.device)
 
@@ -65,9 +73,10 @@ class FedLFPClient:
                 x = x.to(self.device)
                 y = y.to(self.device)
 
+
                 z = self.f(x)         # representations z_a
                 logits = self.h(z)    # predictions for L_ce
-                Lce = F.cross_entropy(logits, y)  # Eq. (6) L_ce
+                Lce = self.ce(logits, y)  # Eq. (6) L_ce
 
                 if GP is None:
                     # Algorithm 1, line 22-24

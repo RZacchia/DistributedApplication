@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
+
+import torch
 
 @dataclass
 class Config:
@@ -52,3 +55,4 @@ class FedLFPConfig:
     kmeans_iters: int = 25
     # Client optimizer
     momentum: float = 0.9
+    class_weights: Optional[torch.Tensor] = None

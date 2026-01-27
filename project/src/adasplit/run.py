@@ -4,13 +4,32 @@ from typing import List, Tuple
 from adasplit.client import FedLFPClient
 from adasplit.configs import FedLFPConfig
 from adasplit.data import dirichlet_partition, load_kronodroid_npz
-from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor
+from adasplit.models import LeNet5ClientHead, LeNet5FeatureExtractor, init_head_small, init_lenet_tanh
 from adasplit.operations import set_seed
 from adasplit.orchestrator import FedLFPTrainer
 from adasplit.server import FedLFPServer
 import torch
 import numpy as np
 
+@torch.no_grad()
+def majority_baseline_from_loader(test_loader) -> tuple[int, float, np.ndarray]:
+    ys = []
+    for _, y in test_loader:
+        ys.append(y.cpu().numpy())
+    y_all = np.concatenate(ys, axis=0)
+
+    counts = np.bincount(y_all)
+    majority_cls = int(counts.argmax())
+    baseline_acc = float(counts[majority_cls] / counts.sum())
+    return majority_cls, baseline_acc, counts
+
+@torch.no_grad()
+def evaluate_mean_client_accuracy(clients, test_loader):
+    accs = []
+    for c in clients:
+        corr, n = evaluate_correct_and_total(c, test_loader)
+        accs.append(corr / max(1, n))
+    return float(sum(accs) / len(accs)), accs
 
 
 def _server_aggregate_compat(server: FedLFPServer, clients: List[FedLFPClient]) -> None:
@@ -43,12 +62,12 @@ def evaluate_correct_and_total(
 
         z = client.f(x)
         logits = client.h(z)
-        pred = logits.argmax(dim=1)
 
+        pred = logits.argmax(dim=1)
         correct += (pred == y).sum().item()
         total += y.size(0)
 
-    return int(correct), int(total)
+    return correct, total
 
 
 @torch.no_grad()
@@ -67,8 +86,7 @@ def evaluate_overall_accuracy_paper_style(
         corr, n = evaluate_correct_and_total(c, test_loader)
         total_correct += corr
         total_n += n
-    acc = total_correct / max(1, total_n)
-    return float(acc), int(total_n)
+    return total_correct / max(1, total_n), total_n
 
 
 def build_krono_droid_fedlfp(
@@ -78,8 +96,7 @@ def build_krono_droid_fedlfp(
     batch_size: int,
     seed: int,
     device: str,
-    # NOTE: we use 32x32 to match classic LeNet5 assumptions in many repos
-    image_side: int = 32,
+    image_side: int = 18,
 ) -> Tuple[List[FedLFPClient], FedLFPServer, FedLFPConfig, torch.utils.data.DataLoader]:
     """
     KronoDroid FedLFP runner (paper-style evaluation):
@@ -103,9 +120,9 @@ def build_krono_droid_fedlfp(
     )
 
     cfg = FedLFPConfig(
-        T=50,
+        T=10,
         E=2,
-        gamma=0.01,
+        gamma=0.1,
         momentum=0.9,
         K=13,              # benign + 12 families
         lambda_cl=0.1,
@@ -126,19 +143,38 @@ def build_krono_droid_fedlfp(
             num_workers=0,
         )
 
-        f = LeNet5FeatureExtractor(in_channels=3, input_size=18)
+        f = LeNet5FeatureExtractor(in_channels=3, input_size=image_side)
         h = LeNet5ClientHead(num_classes=13)
 
+        f.apply(init_lenet_tanh)
+        h.apply(init_head_small)
         clients.append(FedLFPClient(i, f, h, train_loader, num_classes=13, cfg=cfg))
 
     server = FedLFPServer(cfg)
     test_loader = torch.utils.data.DataLoader(
         test_set,
-        batch_size=256,
+        batch_size=64,
         shuffle=False,
         drop_last=False,
         num_workers=0,
     )
+
+    x0, y0 = next(iter(clients[0].dataloader))
+    print("Train batch tensor shape:", x0.shape, "labels:", y0.min().item(), y0.max().item())
+
+
+    maj_cls, maj_acc, counts = majority_baseline_from_loader(test_loader)
+    print(f"[Baseline] Majority class = {maj_cls}, count = {counts[maj_cls]}, "
+        f"baseline acc = {maj_acc*100:.2f}% (N={counts.sum()})")
+    print("[Baseline] Test class counts:", counts.tolist())
+
+    counts = np.bincount(np.array(train_set.y), minlength=13)
+    weights = (counts.sum() / np.maximum(counts, 1)).astype(np.float32)
+    weights = weights / weights.mean()
+    
+    cfg.class_weights = torch.tensor(weights, dtype=torch.float32, device=device)
+    print("Train class counts:", counts.tolist())
+    print("Class weights:", weights.tolist())
 
     return clients, server, cfg, test_loader
 
@@ -256,9 +292,10 @@ def run_one_experiment(
         server.compute_GP()
 
         if (t % eval_every == 0) or (t == 1) or (t == cfg.T):
-            overall_acc, N = evaluate_overall_accuracy_paper_style(clients, test_loader)
-            best_acc = max(best_acc, overall_acc)
-            print(f"[Round {t:03d}] Overall test acc = {overall_acc*100:.2f}% (N={N})")
+            mean_acc, accs = evaluate_mean_client_accuracy(clients, test_loader)
+            print(f"[Round {t:03d}] Mean client test acc = {mean_acc*100:.2f}% (global test)")
+            best_acc = max(accs)
+            print(f"[Round {t:03d}] Best client test acc = {best_acc*100:.2f}% )")
 
     return best_acc
 
@@ -299,7 +336,7 @@ def main():
                 batch_size=args.batch_size,
                 seed=seed,
                 device=device,
-                image_side=32,
+                image_side=18,
             )
         else:
             clients, server, cfg, test_loader = build_cifar10_fedlfp(

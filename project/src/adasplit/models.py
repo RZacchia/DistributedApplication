@@ -1,6 +1,21 @@
 import torch
 import torch.nn as nn
 
+def init_head_small(m: nn.Module):
+    if isinstance(m, nn.Linear):
+        nn.init.xavier_uniform_(m.weight, gain=1.0)
+        m.weight.data.mul_(0.5)  # smaller logits early
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+
+
+def init_lenet_tanh(m: nn.Module):
+    # Conv / Linear weights: Xavier for tanh
+    if isinstance(m, (nn.Conv2d, nn.Linear)):
+        nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain("tanh"))
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+
 
 class LeNet5FeatureExtractor(nn.Module):
     """

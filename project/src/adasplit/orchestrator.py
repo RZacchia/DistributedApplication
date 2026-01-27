@@ -53,7 +53,7 @@ class FedLFPTrainer:
             # --- Server computes GP for next round (Algorithm 1, line 7-12) ---
             self.server.compute_GP()
 
-            if t % max(1, self.cfg.T // 10) == 0 or t == 1:
+            if t % max(1, self.cfg.T // 5) == 0 or t == 1:
                 print(f"[Round {t:03d}] | clients={len(At)} | |LP|={(self.server.LP.shape[0] if self.server.LP is not None else 0)} | GP={'set' if self.server.GP is not None else 'None'}")
 
 

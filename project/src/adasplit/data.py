@@ -166,9 +166,9 @@ class KronoDroidNPZ(Dataset):
             X = np.pad(X, ((0, 0), (0, target - F)), mode="constant", constant_values=0.0)
 
         # reshape to 1x32x32 then repeat to 3 channels for LeNet
-        X = X.reshape(-1, 1, image_side, image_side)  # (N,1,32,32)
+        X = X.reshape(-1, 1, image_side, image_side)  # (N,1,18,18)
         if in_channels == 3:
-            X = np.repeat(X, 3, axis=1)               # (N,3,32,32)
+            X = np.repeat(X, 3, axis=1)               # (N,3,18,18)
         elif in_channels != 1:
             raise ValueError("in_channels must be 1 or 3")
 
