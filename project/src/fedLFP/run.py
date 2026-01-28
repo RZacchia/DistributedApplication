@@ -1,5 +1,6 @@
 import argparse
 from dataclasses import dataclass
+import datetime
 from typing import List, Tuple
 
 from fedLFP.client import FedLFPClient
@@ -12,6 +13,7 @@ from fedLFP.server import FedLFPServer
 import sys
 import torch
 import numpy as np
+from tqdm import tqdm
 
 @torch.no_grad()
 def majority_baseline_from_loader(test_loader) -> tuple[int, float, np.ndarray]:
@@ -31,21 +33,8 @@ def evaluate_mean_client_accuracy(clients, test_loader):
     for c in clients:
         corr, n = evaluate_correct_and_total(c, test_loader)
         accs.append(corr / max(1, n))
-    return float(sum(accs) / len(accs)), accs
+    return float(sum(accs) / len(accs))
 
-
-def _server_aggregate_compat(server: FedLFPServer, clients: List[FedLFPClient]) -> None:
-    """
-    Compatibility wrapper because some codebases implement:
-      - server.aggregate(payloads)
-    others implement:
-      - server.aggregate(clients)
-    """
-    payloads = [(c.LPi, c.Qi, c.Si) for c in clients]
-    try:
-        server.aggregate(payloads)  # type: ignore[arg-type]
-    except TypeError:
-        server.aggregate(clients)   # type: ignore[arg-type]
 
 @torch.no_grad()
 def evaluate_correct_and_total(
@@ -122,7 +111,7 @@ def build_krono_droid_fedlfp(
     )
 
     cfg = FedLFPConfig(
-        T=20,
+        T=50,
         E=2,
         gamma=0.01,
         momentum=0.9,
@@ -281,28 +270,54 @@ def quantize_int8(x: torch.Tensor):
 def dequantize_int8(q: torch.Tensor, scale: torch.Tensor):
     return q.to(torch.float32) * scale
 
+from dataclasses import dataclass
+from typing import List
+import csv
+
 @dataclass
-class CommunicationCosts():
-    client_upload: int = 0
-    client_download: int = 0
-    normed_relative_q_error: float = 0.0 
+class Statistics:
+    upload_to_server: List[int]
+    download_from_server: List[int]
+    normed_relative_q_error: List[float]
+    mean_accuracies: List[float]
+
+    def to_csv(self, filepath: str = "stats.csv"):
+        headers = [
+            "upload_to_server",
+            "download_from_server",
+            "normed_relative_q_error",
+            "mean_accuracies",
+        ]
+
+        rows = zip(
+            self.upload_to_server,
+            self.download_from_server,
+            self.normed_relative_q_error,
+            self.mean_accuracies,
+        )
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+
 
 def fit(
     clients: List[FedLFPClient],
     server: FedLFPServer,
     cfg: FedLFPConfig,
     test_loader: torch.utils.data.DataLoader,
-    eval_every: int,
-    quantize: bool = True
-) -> float:
+    quantize: bool = False
+) -> Statistics:
     """
     Runs one training experiment and returns:
       best_over_rounds_overall_accuracy (paper-style: best single-round accuracy in this run)
     """
     trainer = FedLFPTrainer(clients, server, cfg)
-    best_acc = 0.0
 
-    for t in range(1, cfg.T + 1):
+    stats = Statistics([],[],[],[])
+
+    for t in tqdm(range(1, cfg.T + 1), desc="round"):
         At = trainer.sample_clients()
 
 
@@ -311,13 +326,11 @@ def fit(
         if quantize and t > 1:
             GPq, GPs = quantize_int8(server.GP)
             GPd = dequantize_int8(q=GPq, scale=GPs)
-            rel_err = (GP - GPd).norm() / (GP.norm() + 1e-12)
-            print("GP rel quant error:", rel_err.item())
+            stats.normed_relative_q_error.append((GP - GPd).norm() / (GP.norm() + 1e-12))
             GP = GPd
-            print(f"Server Broadcasts GP ({sys.getsizeof((GPq, GPs))} Bytes) to {len(clients)} clients.")
+            stats.download_from_server.append(sys.getsizeof((GPq, GPs)))
         else:
-            print(f"Server Broadcasts GP ({sys.getsizeof(GP)} Bytes) to {len(clients)} clients.")
-
+            stats.download_from_server.append(sys.getsizeof(GP))
         payloads = []
         payloads_q = []  
         for c in At:      
@@ -325,29 +338,21 @@ def fit(
             if quantize:
                 lpq, lps = quantize_int8(c.LPi)
                 lpd = dequantize_int8(q=lpq, scale=lps)
-                rel_err = (c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12)
-                payloads.append((lpd, c.Qi, c.Si))
+                stats.normed_relative_q_error.append((c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12))
                 payloads_q.append((lpd, c.Qi, c.Si))
+                stats.upload_to_server.append({sys.getsizeof(payloads_q)})
+                server.aggregate(payloads_q)
             else:
                 payloads.append((c.LPi, c.Qi, c.Si))
-                
+                stats.upload_to_server.append({sys.getsizeof(payloads)})
+                server.aggregate(payloads)
 
-        if quantize:
-            print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads_q)} Bytes) to server.")
-        else:
-            print(f"{len(clients)} clients send back payloads ({sys.getsizeof(payloads)} Bytes) to server.")
-            
-
-        server.aggregate(payloads)
         server.compute_GP()
 
+        stats.mean_accuracies.append(evaluate_mean_client_accuracy(clients, test_loader))
         
-        mean_acc, accs = evaluate_mean_client_accuracy(clients, test_loader)
-        print(f"[Round {t:03d}] Mean client test acc = {mean_acc*100:.2f}% (global test)")
-        best_acc = max(accs)
-        print(f"[Round {t:03d}] Best client test acc = {best_acc*100:.2f}% )")
 
-    return best_acc
+    return stats
 
 
 def main():
@@ -355,7 +360,7 @@ def main():
     ap.add_argument("--data_dir", type=str, required=True)
     ap.add_argument("--device", type=str, default="cuda")
     ap.add_argument("--num_clients", type=int, default=20)
-    ap.add_argument("--alpha", type=float, default=0.1)
+    ap.add_argument("--alpha", type=float, default=0.2)
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--eval_every", type=int, default=1)
     ap.add_argument("--runs", type=int, default=3, help="paper-style: repeat and average best-over-rounds")
@@ -372,9 +377,8 @@ def main():
         device = "cpu"
         print("[warn] CUDA not available; using CPU")
 
-    best_runs: List[float] = []
 
-    for r in range(args.runs):
+    for r in tqdm(range(args.runs), desc="run"):
         seed = args.seed + r
         print(f"\n=== Run {r+1}/{args.runs} (seed={seed}) ===")
 
@@ -400,18 +404,15 @@ def main():
 
         print("Train X shape:", np.load("./data/kronodroid_npz/kronodroid_train.npz")["X"].shape)
 
-        best_acc = fit(
+        stats = fit(
             clients=clients,
             server=server,
             cfg=cfg,
             test_loader=test_loader,
-            eval_every=args.eval_every,
         )
-        best_runs.append(best_acc)
-        print(f"Best (this run): {best_acc*100:.2f}%")
-
-    final_report = float(sum(best_runs) / max(1, len(best_runs)))
-    print(f"\nFinal (paper-style): avg(best over rounds) over {args.runs} runs = {final_report*100:.2f}%")
+        filename = datetime.datetime.now().strftime("%H_%M__%d_%m_%Y")
+        stats.to_csv(filepath=f"{filename}.csv")
+    
 
 
 if __name__ == "__main__":
