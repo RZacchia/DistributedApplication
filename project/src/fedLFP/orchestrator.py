@@ -128,11 +128,11 @@ class FedLFPTrainer:
                 GPq, GPs = self.quantize_int8(self.server.GP)
                 GPd = self.dequantize_int8(q=GPq, scale=GPs)
                 GP = GPd
-                stats.download_from_server.append(sys.getsizeof((GPq, GPs)))
+                stats.download_from_server.append(sys.getsizeof((GPq, GPs)) * len(self.clients))
             elif t == 1:
                 stats.download_from_server.append(sys.getsizeof(0))
             else:
-                stats.download_from_server.append(sys.getsizeof(GP))
+                stats.download_from_server.append(sys.getsizeof(GP) * len(self.clients))
 
             payloads = []
             for c in At:      
@@ -148,7 +148,7 @@ class FedLFPTrainer:
             self.server.aggregate(payloads)
             self.server.compute_GP()
 
-            stats.upload_to_server.append({sys.getsizeof(payloads)})
+            stats.upload_to_server.append(sys.getsizeof(payloads))
             stats.mean_accuracies.append(self.evaluate_mean_client_accuracy(self.clients, test_loader))
             
 

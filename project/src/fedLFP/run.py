@@ -244,6 +244,7 @@ def main():
 
     for r in tqdm(range(args.runs), desc="run"):
         seed = args.seed + r
+        prefix = ""
         print(f"\n=== Run {r+1}/{args.runs} (seed={seed}) ===")
 
         if args.krono:
@@ -256,6 +257,7 @@ def main():
                 device=device,
                 image_side=18,
             )
+            prefix = "krono_"
         else:
             clients, server, cfg, test_loader = build_cifar10_fedlfp(
                 data_dir=args.data_dir,
@@ -265,6 +267,8 @@ def main():
                 seed=seed,
                 device=device,
             )
+            prefix = "cifar_10_"
+
 
         print("Train X shape:", np.load("./data/kronodroid_npz/kronodroid_train.npz")["X"].shape)
         trainer = FedLFPTrainer(
@@ -274,7 +278,10 @@ def main():
             )
         stats = trainer.fit(test_loader=test_loader, quantize=args.quantize)
         filename = datetime.datetime.now().strftime("%H_%M__%d_%m_%Y")
-        stats.to_csv(filepath=f"{filename}.csv")
+        
+        if args.quantize:
+            prefix = prefix + "q_"
+        stats.to_csv(filepath=f"{prefix}{filename}.csv")
     
 
 
