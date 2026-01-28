@@ -225,9 +225,10 @@ def main():
     ap.add_argument("--num_clients", type=int, default=20)
     ap.add_argument("--alpha", type=float, default=0.2)
     ap.add_argument("--batch_size", type=int, default=64)
-    ap.add_argument("--eval_every", type=int, default=1)
     ap.add_argument("--runs", type=int, default=3, help="paper-style: repeat and average best-over-rounds")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--quantize", type=bool, default=True)
+
 
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--krono", action="store_true")
@@ -271,7 +272,7 @@ def main():
             server=server,
             cfg=cfg
             )
-        stats = trainer.fit(test_loader=test_loader)
+        stats = trainer.fit(test_loader=test_loader, quantize=args.quantize)
         filename = datetime.datetime.now().strftime("%H_%M__%d_%m_%Y")
         stats.to_csv(filepath=f"{filename}.csv")
     

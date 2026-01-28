@@ -43,10 +43,6 @@ class Statistics:
         ))
 
 
-
-
-
-
 class FedLFPTrainer:
     """
     End-to-end training driver matching Algorithm 1 structure.
@@ -131,29 +127,28 @@ class FedLFPTrainer:
             if quantize and t > 1:
                 GPq, GPs = self.quantize_int8(self.server.GP)
                 GPd = self.dequantize_int8(q=GPq, scale=GPs)
-                stats.normed_relative_q_error.append((GP - GPd).norm() / (GP.norm() + 1e-12))
                 GP = GPd
                 stats.download_from_server.append(sys.getsizeof((GPq, GPs)))
+            elif t == 1:
+                stats.download_from_server.append(sys.getsizeof(0))
             else:
                 stats.download_from_server.append(sys.getsizeof(GP))
+
             payloads = []
-            payloads_q = []  
             for c in At:      
                 c.client_update(GP=GP)
                 if quantize:
-                    lpq, lps = quantize_int8(c.LPi)
-                    lpd = dequantize_int8(q=lpq, scale=lps)
-                    stats.normed_relative_q_error.append((c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12))
-                    payloads_q.append((lpd, c.Qi, c.Si))
-                    stats.upload_to_server.append({sys.getsizeof(payloads_q)})
-                    self.server.aggregate(payloads_q)
+                    lpq, lps = self.quantize_int8(c.LPi)
+                    lpd = self.dequantize_int8(q=lpq, scale=lps)
+                    payloads.append((lpd, c.Qi, c.Si))
                 else:
                     payloads.append((c.LPi, c.Qi, c.Si))
-                    stats.upload_to_server.append({sys.getsizeof(payloads)})
-                    self.server.aggregate(payloads)
 
+            
+            self.server.aggregate(payloads)
             self.server.compute_GP()
 
+            stats.upload_to_server.append({sys.getsizeof(payloads)})
             stats.mean_accuracies.append(self.evaluate_mean_client_accuracy(self.clients, test_loader))
             
 
