@@ -52,14 +52,14 @@ class FedLFPTrainer:
         self.server = server
         self.cfg = cfg
 
-    def quantize_int8(x: torch.Tensor):
+    def quantize_int8(self, x: torch.Tensor):
         x = x.detach()
         maxv = x.abs().max()
         scale = (maxv / 127.0) if maxv > 0 else x.new_tensor(1.0)
         q = torch.clamp((x / scale).round(), -127, 127).to(torch.int8)
         return q, scale
 
-    def dequantize_int8(q: torch.Tensor, scale: torch.Tensor):
+    def dequantize_int8(self, q: torch.Tensor, scale: torch.Tensor):
         return q.to(torch.float32) * scale
 
     def sample_clients(self, ratio_low: float = 0.6, ratio_high: float = 1.0) -> List[FedLFPClient]:
