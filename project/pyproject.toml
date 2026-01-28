@@ -1,5 +1,5 @@
 [project]
-name = "adasplit"
+name = "fedLFP"
 version = "0.0.0"
 requires-python = ">=3.12"
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
 where = ["src"]
 
 [project.scripts]
-adasplit = "adasplit.run:main"
+fedLFP = "fedLFP.run:main"
 
 [project.optional-dependencies]
 dev = [

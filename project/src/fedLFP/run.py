@@ -1,4 +1,5 @@
 import argparse
+from dataclasses import dataclass
 from typing import List, Tuple
 
 from fedLFP.client import FedLFPClient
@@ -280,6 +281,11 @@ def quantize_int8(x: torch.Tensor):
 def dequantize_int8(q: torch.Tensor, scale: torch.Tensor):
     return q.to(torch.float32) * scale
 
+@dataclass
+class CommunicationCosts():
+    client_upload: int = 0
+    client_download: int = 0
+    normed_relative_q_error: float = 0.0 
 
 def fit(
     clients: List[FedLFPClient],
@@ -287,7 +293,7 @@ def fit(
     cfg: FedLFPConfig,
     test_loader: torch.utils.data.DataLoader,
     eval_every: int,
-    quantize: bool = False
+    quantize: bool = True
 ) -> float:
     """
     Runs one training experiment and returns:
@@ -309,7 +315,6 @@ def fit(
             print("GP rel quant error:", rel_err.item())
             GP = GPd
             print(f"Server Broadcasts GP ({sys.getsizeof((GPq, GPs))} Bytes) to {len(clients)} clients.")
-
         else:
             print(f"Server Broadcasts GP ({sys.getsizeof(GP)} Bytes) to {len(clients)} clients.")
 
@@ -336,11 +341,11 @@ def fit(
         server.aggregate(payloads)
         server.compute_GP()
 
-        if (t % eval_every == 0) or (t == 1) or (t == cfg.T):
-            mean_acc, accs = evaluate_mean_client_accuracy(clients, test_loader)
-            print(f"[Round {t:03d}] Mean client test acc = {mean_acc*100:.2f}% (global test)")
-            best_acc = max(accs)
-            print(f"[Round {t:03d}] Best client test acc = {best_acc*100:.2f}% )")
+        
+        mean_acc, accs = evaluate_mean_client_accuracy(clients, test_loader)
+        print(f"[Round {t:03d}] Mean client test acc = {mean_acc*100:.2f}% (global test)")
+        best_acc = max(accs)
+        print(f"[Round {t:03d}] Best client test acc = {best_acc*100:.2f}% )")
 
     return best_acc
 
