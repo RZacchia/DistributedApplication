@@ -19,14 +19,12 @@ from tqdm import tqdm
 class Statistics:
     upload_to_server: List[int]
     download_from_server: List[int]
-    normed_relative_q_error: List[float]
     mean_accuracies: List[float]
 
     def to_csv(self, filepath: str = "stats.csv"):
         headers = [
             "upload_to_server",
             "download_from_server",
-            "normed_relative_q_error",
             "mean_accuracies",
         ]
 
@@ -37,7 +35,6 @@ class Statistics:
             writer.writerows(zip_longest(
             self.upload_to_server,
             self.download_from_server,
-            self.normed_relative_q_error,
             self.mean_accuracies,
             fillvalue=""
         ))
@@ -116,10 +113,10 @@ class FedLFPTrainer:
         best_over_rounds_overall_accuracy (paper-style: best single-round accuracy in this run)
         """
 
-        stats = Statistics([],[],[],[])
+        stats = Statistics([],[],[])
 
         for t in tqdm(range(1, self.cfg.T + 1), desc="round"):
-            At = self.sample_clients()
+            At = self.sample_clients(ratio_low=1)
 
 
             # client update with current global prototypes

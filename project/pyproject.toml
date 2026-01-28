@@ -1,6 +1,6 @@
 [project]
 name = "fedLFP"
-version = "0.0.0"
+version = "0.0.1"
 requires-python = ">=3.12"
 readme = "README.md"
 authors = [{ name = "Robert Zacchia" }]
@@ -11,7 +11,6 @@ dependencies = [
   "numpy",
   "tqdm",
   "matplotlib",
-  "jsonschema>=4.0"
 ]
 
 [tool.setuptools.packages.find]
