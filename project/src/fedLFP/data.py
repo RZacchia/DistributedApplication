@@ -13,6 +13,17 @@ import torch
 from torch.utils.data import Dataset
 
 
+@torch.no_grad()
+def majority_baseline_from_loader(test_loader) -> tuple[int, float, np.ndarray]:
+    ys = []
+    for _, y in test_loader:
+        ys.append(y.cpu().numpy())
+    y_all = np.concatenate(ys, axis=0)
+
+    counts = np.bincount(y_all)
+    majority_cls = int(counts.argmax())
+    baseline_acc = float(counts[majority_cls] / counts.sum())
+    return majority_cls, baseline_acc, counts
 
 
 def dirichlet_partition(

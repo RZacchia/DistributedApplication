@@ -2,12 +2,48 @@
 # Orchestrator
 # ------------------------------
 
+import csv
+from dataclasses import dataclass
+from itertools import zip_longest
 import random
-from typing import List
+import sys
+from typing import List, Tuple
 
 from fedLFP.client import FedLFPClient
 from fedLFP.configs import FedLFPConfig
 from fedLFP.server import FedLFPServer
+import torch
+from tqdm import tqdm
+
+@dataclass
+class Statistics:
+    upload_to_server: List[int]
+    download_from_server: List[int]
+    normed_relative_q_error: List[float]
+    mean_accuracies: List[float]
+
+    def to_csv(self, filepath: str = "stats.csv"):
+        headers = [
+            "upload_to_server",
+            "download_from_server",
+            "normed_relative_q_error",
+            "mean_accuracies",
+        ]
+
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(zip_longest(
+            self.upload_to_server,
+            self.download_from_server,
+            self.normed_relative_q_error,
+            self.mean_accuracies,
+            fillvalue=""
+        ))
+
+
+
 
 
 
@@ -20,6 +56,16 @@ class FedLFPTrainer:
         self.server = server
         self.cfg = cfg
 
+    def quantize_int8(x: torch.Tensor):
+        x = x.detach()
+        maxv = x.abs().max()
+        scale = (maxv / 127.0) if maxv > 0 else x.new_tensor(1.0)
+        q = torch.clamp((x / scale).round(), -127, 127).to(torch.int8)
+        return q, scale
+
+    def dequantize_int8(q: torch.Tensor, scale: torch.Tensor):
+        return q.to(torch.float32) * scale
+
     def sample_clients(self, ratio_low: float = 0.6, ratio_high: float = 1.0) -> List[FedLFPClient]:
         """
         Paper's experimental setup samples a client selection ratio between 0.6 and 1 each round
@@ -29,33 +75,89 @@ class FedLFPTrainer:
         ratio = random.uniform(ratio_low, ratio_high)
         m = max(1, int(round(M * ratio)))
         return random.sample(self.clients, m)
+    
 
-    def fit(self) -> None:
+    @torch.no_grad()
+    def evaluate_correct_and_total(
+        self,
+        client: FedLFPClient,
+        dataloader: torch.utils.data.DataLoader,
+    ) -> Tuple[int, int]:
+        """Return (correct, total) Top-1 over a dataloader."""
+        client.f.eval()
+        client.h.eval()
+
+        correct = 0
+        total = 0
+        for x, y in dataloader:
+            x = x.to(client.device)
+            y = y.to(client.device)
+
+            z = client.f(x)
+            logits = client.h(z)
+
+            pred = logits.argmax(dim=1)
+            correct += (pred == y).sum().item()
+            total += y.size(0)
+
+        return correct, total
+    
+    @torch.no_grad()
+    def evaluate_mean_client_accuracy(self, clients, test_loader):
+        accs = []
+        for c in clients:
+            corr, n = self.evaluate_correct_and_total(c, test_loader)
+            accs.append(corr / max(1, n))
+        return float(sum(accs) / len(accs))
+
+    def fit(
+        self,
+        test_loader: torch.utils.data.DataLoader,
+        quantize: bool = False
+    ) -> Statistics:
         """
-        Run T communication rounds (Algorithm 1, line 3).
+        Runs one training experiment and returns:
+        best_over_rounds_overall_accuracy (paper-style: best single-round accuracy in this run)
         """
-        for t in range(1, self.cfg.T + 1):
-            At = self.sample_clients()  # Algorithm 1, line 4
 
-            # --- Clients upload {LPi, Qi, Si} from previous state if exists ---
-            # In the paper, upload happens after local training each round (Algorithm 1, line 33).
-            # To keep logic simple, we do: clients first train with last GP, then upload for next GP.
-            # Start with GP=None in round 1.
-            GP = self.server.GP  # may be None at t=1
+        stats = Statistics([],[],[],[])
 
-            # --- Client local updates (Algorithm 1, line 13-16) ---
-            for c in At:
+        for t in tqdm(range(1, self.cfg.T + 1), desc="round"):
+            At = self.sample_clients()
+
+
+            # client update with current global prototypes
+            GP = self.server.GP
+            if quantize and t > 1:
+                GPq, GPs = self.quantize_int8(self.server.GP)
+                GPd = self.dequantize_int8(q=GPq, scale=GPs)
+                stats.normed_relative_q_error.append((GP - GPd).norm() / (GP.norm() + 1e-12))
+                GP = GPd
+                stats.download_from_server.append(sys.getsizeof((GPq, GPs)))
+            else:
+                stats.download_from_server.append(sys.getsizeof(GP))
+            payloads = []
+            payloads_q = []  
+            for c in At:      
                 c.client_update(GP=GP)
+                if quantize:
+                    lpq, lps = quantize_int8(c.LPi)
+                    lpd = dequantize_int8(q=lpq, scale=lps)
+                    stats.normed_relative_q_error.append((c.LPi - lpd).norm() / (c.LPi.norm() + 1e-12))
+                    payloads_q.append((lpd, c.Qi, c.Si))
+                    stats.upload_to_server.append({sys.getsizeof(payloads_q)})
+                    self.server.aggregate(payloads_q)
+                else:
+                    payloads.append((c.LPi, c.Qi, c.Si))
+                    stats.upload_to_server.append({sys.getsizeof(payloads)})
+                    self.server.aggregate(payloads)
 
-            # --- Server receives and aggregates (Algorithm 1, line 5-6) ---
-            payloads = [(c.LPi, c.Qi, c.Si) for c in At]
-            self.server.aggregate(payloads)
-
-            # --- Server computes GP for next round (Algorithm 1, line 7-12) ---
             self.server.compute_GP()
 
-            # if t % max(1, self.cfg.T // 5) == 0 or t == 1:
-            print(f"[Round {t:03d}] | clients={len(At)} | |LP|={(self.server.LP.shape[0] if self.server.LP is not None else 0)} | GP={'set' if self.server.GP is not None else 'None'}")
+            stats.mean_accuracies.append(self.evaluate_mean_client_accuracy(self.clients, test_loader))
+            
+
+        return stats
 
 
 
