@@ -227,7 +227,8 @@ def main():
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--runs", type=int, default=3, help="paper-style: repeat and average best-over-rounds")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--quantize", type=bool, default=True)
+    ap.add_argument("--no-quantize", action="store_false", dest="quantize")
+    ap.set_defaults(quantize=True)
 
 
     g = ap.add_mutually_exclusive_group(required=True)
@@ -235,6 +236,8 @@ def main():
     g.add_argument("--cifar10", action="store_true")
 
     args = ap.parse_args()
+
+
 
     device = args.device
     if device == "cuda" and not torch.cuda.is_available():
@@ -280,6 +283,7 @@ def main():
         filename = datetime.datetime.now().strftime("%H_%M__%d_%m_%Y")
         
         if args.quantize:
+            print("Quantized enabled")
             prefix = prefix + "q_"
         stats.to_csv(filepath=f"{prefix}{filename}.csv")
     

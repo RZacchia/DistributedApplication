@@ -102,6 +102,20 @@ class FedLFPTrainer:
             corr, n = self.evaluate_correct_and_total(c, test_loader)
             accs.append(corr / max(1, n))
         return float(sum(accs) / len(accs))
+    
+    def bytes_of(self, obj) -> int:
+        if obj is None:
+            return 0
+        if isinstance(obj, torch.Tensor):
+            return obj.numel() * obj.element_size()
+        if isinstance(obj, (list, tuple)):
+            return sum(self.bytes_of(x) for x in obj)
+        if isinstance(obj, dict):
+            return sum(self.bytes_of(k) + self.bytes_of(v) for k, v in obj.items())
+        # scalars
+        if isinstance(obj, (int, float, bool)):
+            return 8
+        return 0
 
     def fit(
         self,
@@ -125,27 +139,40 @@ class FedLFPTrainer:
                 GPq, GPs = self.quantize_int8(self.server.GP)
                 GPd = self.dequantize_int8(q=GPq, scale=GPs)
                 GP = GPd
-                stats.download_from_server.append(sys.getsizeof((GPq, GPs)) * len(self.clients))
+                stats.download_from_server.append(self.bytes_of((GPq, GPs)) * len(self.clients))
             elif t == 1:
-                stats.download_from_server.append(sys.getsizeof(0))
+                stats.download_from_server.append(self.bytes_of(0))
             else:
-                stats.download_from_server.append(sys.getsizeof(GP) * len(self.clients))
+                stats.download_from_server.append(self.bytes_of(GP) * len(self.clients))
 
             payloads = []
+            quantized_payload = []
             for c in At:      
                 c.client_update(GP=GP)
                 if quantize:
                     lpq, lps = self.quantize_int8(c.LPi)
-                    lpd = self.dequantize_int8(q=lpq, scale=lps)
-                    payloads.append((lpd, c.Qi, c.Si))
+                    lpd_i = self.dequantize_int8(q=lpq, scale=lps)
+
+                    qq, qs = self.quantize_int8(c.Qi)
+                    qd_i = self.dequantize_int8(q=qq, scale=qs)
+
+                    sq, ss = self.quantize_int8(c.Si)
+                    sd_i = self.dequantize_int8(q=sq, scale=ss)
+                    
+                    quantized_payload.append((lpq, lps, qq, qs, sq, ss))
+                    payloads.append((lpd_i, qd_i, sd_i))
                 else:
                     payloads.append((c.LPi, c.Qi, c.Si))
 
-            
+
+            if quantize:
+                stats.upload_to_server.append(self.bytes_of(quantized_payload))
+            else:
+                stats.upload_to_server.append(self.bytes_of(payloads))
+
             self.server.aggregate(payloads)
             self.server.compute_GP()
 
-            stats.upload_to_server.append(sys.getsizeof(payloads))
             stats.mean_accuracies.append(self.evaluate_mean_client_accuracy(self.clients, test_loader))
             
 
